@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="ht">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SheRoosLive</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #0f0a1e; color: #fff; min-height: 100vh; }
+  header { background: linear-gradient(90deg, #7b2ff7, #f107a3); padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 24px; }
+  header .coins { background: rgba(0,0,0,.35); padding: 6px 14px; border-radius: 20px; font-weight: bold; }
+  main { padding: 16px; max-width: 700px; margin: 0 auto; }
+  h2 { margin: 22px 0 10px; font-size: 18px; }
+  .card { background: #1d1433; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .live-badge { background: #e0245e; color: #fff; font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: bold; }
+  .off-badge { background: #555; color: #fff; font-size: 11px; padding: 3px 8px; border-radius: 6px; }
+  .gift { display: inline-block; background: #1d1433; border-radius: 12px; padding: 12px 16px; margin: 0 8px 8px 0; text-align: center; }
+  .gift .price { color: #ffd166; font-weight: bold; }
+  #status { background: #2a1e4d; border-radius: 10px; padding: 12px; margin-top: 14px; font-size: 14px; }
+  .err { color: #ff7b7b; }
+  .ok { color: #7bffb2; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎥 SheRoosLive</h1>
+  <div class="coins">🪙 <span id="coinCount">…</span> ⭐ <span id="pointsCount">…</span></div>
+</header>
+<main>
+  <div id="status">⏳ N ap konekte ak baz done a…</div>
+
+  <h2>🔴 Live kounye a</h2>
+  <div id="streams"></div>
+
+  <h2>👤 Pwofil mwen</h2>
+  <div id="profile"></div>
+  <div class="card" style="margin-top:10px;">
+    <div style="font-size:14px; margin-bottom:8px;">🖼 Foto pwofil ou</div>
+    <input id="avatarFile" type="file" accept="image/*" style="width:100%; margin-bottom:8px;">
+    <div style="font-size:13px; color:#9ca3af; margin-bottom:8px;">oswa kole lyen foto a :</div>
+    <input id="avatarInput" type="url" placeholder="Kole lyen foto a isit la (egz: https://...)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <button id="avatarSaveBtn" style="background:#7b2ff7; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">💾 Sove foto a</button>
+    <div id="avatarStatus" style="margin-top:8px; font-size:13px;"></div>
+  </div>
+
+  <h2>🔐 Koneksyon</h2>
+  <div class="card">
+    <input id="authEmail" type="email" placeholder="Imèl ou" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <input id="authPass" type="password" placeholder="Modpas ou (omwen 6 karaktè)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <input id="authUsername" type="text" placeholder="Non itilizatè (pou kreye kont)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <input id="authRefCode" type="text" placeholder="Kòd referal (si yon moun envite w — non itilizatè yo)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <div style="display:flex; gap:8px;">
+      <button id="authSignupBtn" style="flex:1; background:#7b2ff7; color:#fff; border:none; padding:12px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer;">📝 Kreye kont</button>
+      <button id="authLoginBtn" style="flex:1; background:#0e9f6e; color:#fff; border:none; padding:12px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer;">🔑 Konekte</button>
+    </div>
+    <button id="authLogoutBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px; display:none;">🚪 Dekonekte</button>
+    <div id="authStatus" style="margin-top:10px; font-size:14px;">Ou pa konekte — kreye kont oswa konekte pou w gen pwòp pwofil ou.</div>
+  </div>
+
+  <h2>🤝 Referal</h2>
+  <div class="card">
+    <div id="refInfo" style="font-size:14px;">Konekte pou wè kòd referal ou.</div>
+    <p style="font-size:14px; margin-top:8px;">💡 Pataje <b>non itilizatè w</b> kòm kòd referal. Lè yon moun ou envite fè <b>PREMYE rechaje</b> li, ou resevwa <b>10%</b> nan coins rechaje a kòm bonis. Pa gen bonis sou enskripsyon sèlman.</p>
+  </div>
+
+  <h2>📋 Tach chak jou</h2>
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #333;">
+      <span>👑 Konekte chak jou — <b>10 coins</b> <span id="taskLoginProg" style="color:#9ca3af;"></span></span>
+      <button id="taskLoginBtn" style="background:#0e9f6e; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;">Reklame</button>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #333;">
+      <span>👀 Gade live 30 minit — <b>500 coins</b> <span id="taskWatchProg" style="color:#9ca3af;"></span></span>
+      <button id="taskWatchBtn" style="background:#0e9f6e; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;">Reklame</button>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #333;">
+      <span>🎁 Voye 5 kado — <b>200 coins</b> <span id="taskGiftProg" style="color:#9ca3af;"></span></span>
+      <button id="taskGiftBtn" style="background:#0e9f6e; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;">Reklame</button>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
+      <span>🎮 Jwe 3 fwa (Wou, Jackpot) — <b>300 coins</b> <span id="taskPlayProg" style="color:#9ca3af;"></span></span>
+      <button id="taskPlayBtn" style="background:#0e9f6e; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;">Reklame</button>
+    </div>
+    <div id="taskStatus" style="margin-top:10px; font-size:14px;"></div>
+  </div>
+
+  <div id="creditSection" style="display:none;">
+    <h2>💰 Kredite rechaje (Animatè sèlman)</h2>
+    <div class="card">
+      <p style="font-size:14px;">Kredite yon rechaje manyèl (Cash App) : premye rechaje yon itilizatè jwenn <b>+30%</b> coins. Si se premye rechaje li epi yon moun te envite l, envite a resevwa <b>10%</b> nan coins yo kòm bonis referal.</p>
+      <input id="creditUser" type="text" placeholder="Non itilizatè moun nan" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px; margin-top:8px;">
+      <input id="creditDollars" type="number" value="5" min="1" placeholder="Montan an dola ($)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+      <button id="creditBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">💰 Kredite rechaje a</button>
+      <div id="creditStatus" style="margin-top:10px; font-size:14px;"></div>
+      <hr style="border-color:#444; margin:14px 0;">
+      <p style="font-size:14px;">⭐ Ajiste Pwen Jwèt (pou peye retrè pwen oswa korije): mete yon nonb pozitif pou ajoute, negatif pou retire.</p>
+      <input id="ptsUser" type="text" placeholder="Non itilizatè moun nan" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+      <input id="ptsAmount" type="number" placeholder="Pwen (+ oswa -)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+      <button id="ptsBtn" style="background:#7b2ff7; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">⭐ Ajiste pwen yo</button>
+      <div id="ptsStatus" style="margin-top:10px; font-size:14px;"></div>
+      <hr style="border-color:#444; margin:14px 0;">
+      <p style="font-size:14px;">🪙 Ajiste Coins (pou peye retrè coins oswa korije): mete yon nonb pozitif pou ajoute, negatif pou retire.</p>
+      <input id="coinsUser" type="text" placeholder="Non itilizatè moun nan" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+      <input id="coinsAmount" type="number" placeholder="Coins (+ oswa -)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+      <button id="coinsBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🪙 Ajiste coins yo</button>
+      <div id="coinsStatus" style="margin-top:10px; font-size:14px;"></div>
+    </div>
+  </div>
+
+  <div id="platformSection" style="display:none;">
+    <h2>💰 Salè platfòm (ou menm sèlman)</h2>
+    <div class="card">
+      <div id="platformStats" style="font-size:14px;">⏳ N ap kalkile...</div>
+      <button id="platformRefreshBtn" style="background:#1f2937; color:#fff; border:none; padding:10px 18px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; margin-top:10px;">🔄 Rafrechi</button>
+      <p style="font-size:13px; margin-top:10px;">30% chak kado ale nan platfòm nan. Coins sa yo pa janm vin dèt pou peye animatè — lajan reyèl la se sa achtè yo deja peye pou coins yo.</p>
+    </div>
+  </div>
+
+  <h2>🎁 Kado</h2>
+  <div id="gifts"></div>
+  <div id="giftStatus" style="font-size:14px; margin-top:4px;">👆 Klike yon kado pou w voye l nan live la</div>
+
+  <div id="receivedSection" style="display:none;">
+    <h2>🎁 Kado m resevwa</h2>
+    <div class="card">
+      <div id="receivedList" style="font-size:14px;">⏳ N ap chaje kado ou resevwa yo...</div>
+      <button id="receivedRefreshBtn" style="background:#1f2937; color:#fff; border:none; padding:10px 18px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; margin-top:10px;">🔄 Rafrechi</button>
+    </div>
+  </div>
+
+  <h2>🎯 Quiz Live</h2>
+  <div class="card">
+    <input id="quizQuestion" type="text" placeholder="Kesyon an (egz: Ki ane Ayiti te pran endepandans?)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <input id="quizAnswer" type="text" placeholder="Bon repons lan (kache — sèl ou wè l)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <input id="quizFee" type="number" value="10" min="0" placeholder="Pri antre (coins)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <button id="quizStartBtn" style="background:#f59e0b; color:#000; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🎯 Kòmanse Quiz</button>
+    <button id="quizStopBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">⏹ Kanpe Quiz la</button>
+    <button id="quizJoinBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">🎟️ Antre nan Quiz la</button>
+    <div id="quizStatus" style="margin-top:10px; font-size:14px;">👆 Animatè a ekri kesyon an. Peze Antre anvan w reponn — antre a dedwi nan Coins ou, gayan an pran 70% po a an Pwen!</div>
+  </div>
+
+  <h2>⚔️ PK Battle</h2>
+  <div class="card">
+    <select id="pkMode" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+      <option value="2">⚔️ PK 2 jwè (Ble vs Wouj)</option>
+      <option value="4">⚔️ PK 4 jwè (Ble vs Wouj vs Vèt vs Jòn)</option>
+    </select>
+    <input id="pkOpp" type="text" placeholder="Non advèsè 1 (Wouj) (egz: Jeff)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <div id="pkOppExtra" style="display:none;">
+      <input id="pkOppVet" type="text" placeholder="Non advèsè 2 (Vèt)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+      <input id="pkOppJon" type="text" placeholder="Non advèsè 3 (Jòn)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    </div>
+    <input id="pkMinutes" type="number" value="3" min="1" placeholder="Dire (minit)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <button id="pkStartBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">⚔️ Kòmanse PK</button>
+    <button id="pkStopBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">⏹ Kanpe PK a</button>
+    <div style="display:flex; gap:8px; margin-top:10px;">
+      <button id="pkSideBleBtn" style="flex:1; background:#2563eb; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟦 Kan Ble</button>
+      <button id="pkSideWoujBtn" style="flex:1; background:#dc2626; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟥 Kan Wouj</button>
+    </div>
+    <div id="pkSideRow2" style="display:none; gap:8px; margin-top:8px;">
+      <button id="pkSideVetBtn" style="flex:1; background:#0e9f6e; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟩 Kan Vèt</button>
+      <button id="pkSideJonBtn" style="flex:1; background:#f59e0b; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟨 Kan Jòn</button>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:10px;">
+      <button id="pkGloveBtn" style="flex:1; background:#0891b2; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🥊 Mete gan (×5, 30s)</button>
+    </div>
+    <div id="pkBoard" style="margin-top:12px; display:none;">
+      <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Kan yo</span><span id="pkTimer">--:--</span></div>
+      <div id="pkRows" style="margin-top:6px;"></div>
+      <div id="pkFx" style="margin-top:6px; font-size:14px;"></div>
+    </div>
+    <div id="pkStatus" style="margin-top:10px; font-size:14px;">👆 Animatè a kòmanse PK a, espektatè yo chwazi kan yo, epi kado yo konte kòm pwen. Depi PK a lanse, chak kan jwenn FWA 3 ki aktive pou kont li (×3, 30s), san klike. Lè FWA 3 fini (30s), apre yon ti tan (15s) yon bonis FWA 2 oswa 3 parèt otomatik kòm objektif — kan an dwe rive 300 pwen nan 30 segonn pou debloke l, sinon li pèdi l; lè li debloke, li aktive pou kont li tou (30s). Apre chak bonis fini, yon lòt parèt menm jan an. Gan an rete manyèl: fòk ou klike sou bouton gan an. 10 dènye segonn PK a = moman snip.</div>
+    <div id="pkVet" style="margin-top:6px; font-size:14px;"></div>
+  </div>
+
+  <h2>🎡 Wou Chans</h2>
+  <div class="card" style="text-align:center;">
+    <div style="position:relative; width:260px; height:260px; margin:0 auto;">
+      <div id="wheel" style="width:260px; height:260px; border-radius:50%; background:conic-gradient(#e0245e 0deg 45deg, #f59e0b 45deg 90deg, #0e9f6e 90deg 135deg, #2563eb 135deg 180deg, #7b2ff7 180deg 225deg, #dc2626 225deg 270deg, #0891b2 270deg 315deg, #65a30d 315deg 360deg); position:relative; overflow:hidden;">
+        <span style="position:absolute; left:50%; top:50%; transform:rotate(22.5deg) translateY(-98px) rotate(-22.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🎁</span>
+        <span style="position:absolute; left:50%; top:50%; transform:rotate(67.5deg) translateY(-98px) rotate(-67.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🇭🇹</span>
+        <span style="position:absolute; left:50%; top:50%; transform:rotate(112.5deg) translateY(-98px) rotate(-112.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">👑</span>
+        <span style="position:absolute; left:50%; top:50%; transform:rotate(157.5deg) translateY(-98px) rotate(-157.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🌟</span>
+        <span style="position:absolute; left:50%; top:50%; transform:rotate(202.5deg) translateY(-98px) rotate(-202.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🎉</span>
+        <span style="position:absolute; left:50%; top:50%; transform:rotate(247.5deg) translateY(-98px) rotate(-247.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">😢</span>
+        <span style="position:absolute; left:50%; top:50%; transform:rotate(292.5deg) translateY(-98px) rotate(-292.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">💨</span>
+        <span style="position:absolute; left:50%; top:50%; transform:rotate(337.5deg) translateY(-98px) rotate(-337.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🔄</span>
+      </div>
+      <div style="position:absolute; top:-6px; left:50%; transform:translateX(-50%); font-size:32px;">▼</div>
+    </div>
+    <input id="spinPrice" type="number" value="10" min="0" placeholder="Pri vire a (coins)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-top:14px; margin-bottom:8px;">
+    <button id="spinBtn" style="background:#f59e0b; color:#000; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🎡 Vire Wou a</button>
+    <div id="spinStatus" style="margin-top:10px; font-size:14px;">👆 Vire wou a — mize a dedwi nan Coins ou, genyen an antre nan Pwen Jwèt ou (20,000 pwen = $1). Ou ka jwe menm si ou pa nan live!</div>
+    <div style="margin-top:8px; font-size:13px;">🎁 Bwat ×0.1 • 🇭🇹 Drapo ×3 • 👑 Kouwòn ×0.3 • 🌟 Lejand ×1 • 🎉 Konfeti ×0.05 • 😢 Pèdi 0 • 💨 Zewo 0 • 🔄 Ankò gratis</div>
+  </div>
+
+  <h2>🔤 Mo Andezòd</h2>
+  <div class="card">
+    <input id="scrWord" type="text" placeholder="Mo a (egz: AYITI)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <input id="scrPenalty" type="number" value="5" min="0" placeholder="Pwen pèdi pa move repons" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <button id="scrStartBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🔤 Melanje epi Kòmanse</button>
+    <button id="scrStopBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">⏹ Kanpe Mo a</button>
+    <button id="scrAutoBtn" style="background:#2563eb; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">▶️ Mòd Otomatik</button>
+    <div id="scrStatus" style="margin-top:10px; font-size:14px;">👆 Animatè a ekri yon mo, app la melanje lèt yo, espektatè yo ranje yo nan chat la. Chak devine ak miz dedwi nan Coins ou; gayan an pran 70% po a an Pwen!</div>
+  </div>
+
+  <h2>💰 Rechaje & Bonis</h2>
+  <div class="card">
+    <p>💰 <b>To a :</b> $1 = 10,000 coins — plis ke Poppo! ($20 = 200,000 coins)</p>
+    <p>🎁 <b>Premye rechaje :</b> +30% coins gratis! ($20 → 260,000 coins)</p>
+    <p>👑 <b>VIP :</b> rechaje $20 oswa plis → badge VIP + kado eksklizif</p>
+    <p>📅 <b>Bonis chak jou :</b> 10 coins gratis chak jou pou w goute jwèt yo</p>
+    <p>🏆 <b>Top rechaje :</b> moun ki rechaje plis yo ap parèt an tèt live la</p>
+    <p>💵 <b>Retrè animatè :</b> 10,000 coins ou fè nan kado = $0.70 (minimòm 200,000 coins = $14, chak vandredi)</p>
+    <p>⭐ <b>Pwen Jwèt :</b> ou mize Coins, ou genyen Pwen. <b>20,000 pwen = $1</b> — retrè pwen minimòm 200,000 pwen = $10, chak vandredi, Shelo apwouve.</p>
+    <p style="font-size:14px;">💵 <b>Kijan pou rechaje :</b> peye sou Cash App, voye non itilizatè w bay Shelo nan chat la, epi l ap mete coins yo sou kont ou.</p>
+    <button id="rechargeBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">💵 Mwen vle rechaje</button>
+    <div id="rechargeStatus" style="margin-top:10px; font-size:14px;"></div>
+  </div>
+
+  <h2>💵 Mande Retrè</h2>
+  <div class="card">
+    <p style="font-size:14px;">📅 Chak vandredi • Minimòm 200,000 coins ou fè nan kado = $14 • Ou konfime, Shelo apwouve, apre sa lajan an voye.</p>
+    <input id="wdCoins" type="number" value="200000" min="200000" placeholder="Kantite coins (minimòm 200,000)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <select id="wdMethod" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+      <option value="PayPal">PayPal</option>
+      <option value="Cash App">Cash App</option>
+      <option value="MonCash" disabled>MonCash (Bientôt)</option>
+      <option value="NatCash" disabled>NatCash (Bientôt)</option>
+    </select>
+    <input id="wdNumber" type="text" placeholder="Kont ou (nimewo, imèl, $cashtag)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <button id="wdBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">💵 Mande Retrè</button>
+    <div id="wdStatus" style="margin-top:10px; font-size:14px;"></div>
+  </div>
+
+  <h2>⭐ Mande Retrè Pwen</h2>
+  <div class="card">
+    <p style="font-size:14px;">📅 Chak vandredi • Minimòm 200,000 pwen = $10 • Ou konfime, Shelo apwouve, pwen yo retire lè peman an fèt.</p>
+    <input id="wdPts" type="number" value="200000" min="200000" placeholder="Kantite pwen (minimòm 200,000)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <select id="wdPtsMethod" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+      <option value="PayPal">PayPal</option>
+      <option value="Cash App">Cash App</option>
+      <option value="MonCash" disabled>MonCash (Bientôt)</option>
+      <option value="NatCash" disabled>NatCash (Bientôt)</option>
+    </select>
+    <input id="wdPtsNumber" type="text" placeholder="Kont ou (nimewo, imèl, $cashtag)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+    <button id="wdPtsBtn" style="background:#7b2ff7; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">⭐ Mande Retrè Pwen</button>
+    <div id="wdPtsStatus" style="margin-top:10px; font-size:14px;"></div>
+  </div>
+
+  <h2>🎰 Jackpot Ayiti</h2>
+  <div class="card" style="text-align:center;">
+    <div style="display:flex; justify-content:center; gap:10px; font-size:64px;">
+      <span id="reel1" style="background:#222; border-radius:12px; padding:10px 16px;">🇭🇹</span>
+      <span id="reel2" style="background:#222; border-radius:12px; padding:10px 16px;">🇭🇹</span>
+      <span id="reel3" style="background:#222; border-radius:12px; padding:10px 16px;">🇭🇹</span>
+    </div>
+    <input id="jackPrice" type="number" value="10" min="0" placeholder="Pri vire a (coins)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-top:14px; margin-bottom:8px;">
+    <button id="jackBtn" style="background:#dc2626; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🎰 Vire Jackpot la</button>
+    <div id="jackStatus" style="margin-top:10px; font-size:14px;">👆 3 imaj parey = 🎰 BIG WIN! Mize a dedwi nan Coins ou, genyen an antre nan Pwen Jwèt ou. Ou ka jwe menm si ou pa nan live!</div>
+    <div style="margin-top:8px; font-size:13px;">3×🇭🇹 = miz ×20 • 3×lòt = miz ×5 • 2 parey = miz ×0.5 • Sinon = pèdi</div>
+  </div>
+
+  <h2>📹 Videyo Live</h2>
+  <div class="card">
+    <input id="titleInput" type="text" placeholder="Tit live la (egz: Bonswa tout moun)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
+    <input id="tokenInput" type="text" placeholder="Kole token tanporè Agora a isit la" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
+    <button id="goLiveBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🔴 Kòmanse Live</button>
+    <button id="audioLiveBtn" style="background:#4a3aff; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">🎙 Live ak Vwa Sèlman</button>
+    <button id="watchBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">👀 Gade Live la (Espektatè)</button>
+    <button id="panelBtn" style="background:#7b2ff7; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px; display:none;">⬆️ Monte sou panel</button>
+    <button id="leaveBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px; display:none;">⏹ Kite Live la</button>
+    <div id="liveStatus" style="margin-top:10px; font-size:14px;"></div>
+    <h3 style="margin-top:14px; font-size:15px;">🎛 Panel Live la (9 plas)</h3>
+    <div id="panelGrid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-top:10px;">
+      <div id="localVideo" style="aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden;"></div>
+      <div id="remoteVideos" style="display:contents;"></div>
+    </div>
+    <p style="font-size:13px; color:#9ca3af; margin-top:8px;">👆 Klike sou yon videyo pou wè l gran, klike ankò pou retounen nan griy la.</p>
+  </div>
+
+  <h2>💬 Chat Live la</h2>
+  <div class="card">
+    <div id="chatBox" style="max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;"></div>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <input id="chatInput" type="text" placeholder="Ekri yon mesaj..." style="flex:1; padding:10px; border-radius:8px; border:none;">
+      <button id="chatSend" style="background:#7b2ff7; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-weight:bold; cursor:pointer;">Voye</button>
+    </div>
+    <div id="chatStatus" style="margin-top:6px; font-size:13px;"></div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.23.0.js"></script>
+<script>
+  // ===== KONFIGIRASYON =====
+  const SUPABASE_URL = "https://bshmtdwopdwccaotzlpc.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_vW801UuDURA9LV2fVSuFKg_9Dw85AAq";
+  // =========================
+
+  const statusEl = document.getElementById('status');
+
+  // ===== LOGIN REYÈL — imèl + modpas (faz 1: chak itilizatè gen pwòp pwofil li) =====
+  function levelSentKey(username) { return 'levelSent_' + (username || 'guest'); }
+  function levelGetSent(username) { try { return parseInt(localStorage.getItem(levelSentKey(username)), 10) || 0; } catch (e) { return 0; } }
+  function levelFromSent(sent) { return Math.floor(sent / 2000) + 1; }
+  function renderProfileCard(p) {
+    document.getElementById('coinCount').textContent = p.coins;
+    const pc = document.getElementById('pointsCount'); if (pc) pc.textContent = (p.game_points || 0) + ' pwen';
+    const avatarHtml = p.avatar_url
+      ? '<img src="' + p.avatar_url + '" alt="Foto pwofil" style="width:64px; height:64px; border-radius:50%; object-fit:cover; flex-shrink:0;">'
+      : '<div style="width:64px; height:64px; border-radius:50%; background:#7b2ff7; display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0;">👤</div>';
+    let vetBadge = '';
+    try { const n = parseInt(localStorage.getItem('pkPlayed_' + p.username), 10) || 0; if (n >= 10) vetBadge = '<br>🏅 Veteran PK'; } catch (e) {}
+    const sent = levelGetSent(p.username);
+    const lvl = levelFromSent(sent);
+    const intoLvl = sent - (lvl - 1) * 2000;
+    document.getElementById('profile').innerHTML =
+      '<div class="card" style="display:flex; gap:14px; align-items:center;">' + avatarHtml +
+      '<div><strong>' + p.username + '</strong>' + vetBadge + '<br>' + (p.bio || '') + '<br>🪙 ' + p.coins + ' coins<br>⭐ ' + (p.game_points || 0) + ' pwen<br>🏆 Nivo ' + lvl + ' (' + sent + ' coins voye, ' + intoLvl + '/2000 pou pwochen nivo)</div></div>';
+    const avInput = document.getElementById('avatarInput');
+    if (avInput) avInput.value = (p.avatar_url && p.avatar_url.indexOf('http') === 0) ? p.avatar_url : '';
+  }
+  // ===== FOTO PWOFIL — mete lyen foto a sou kont ou =====
+  // Konprese yon foto galeri an 256px (JPEG) pou l pa lou nan chat la
+  function compressAvatar(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const max = 256;
+          let w = img.width, h = img.height;
+          if (w > h && w > max) { h = Math.round(h * max / w); w = max; }
+          else if (h >= w && h > max) { w = Math.round(w * max / h); h = max; }
+          const cv = document.createElement('canvas');
+          cv.width = w; cv.height = h;
+          cv.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(cv.toDataURL('image/jpeg', 0.8));
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+  (function setupAvatarSave() {
+    const btn = document.getElementById('avatarSaveBtn');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      const st = document.getElementById('avatarStatus');
+      const fileInput = document.getElementById('avatarFile');
+      const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+      const urlInput = (document.getElementById('avatarInput').value || '').trim();
+      const sessUser = window._sessionUser;
+      if (!sessUser) { st.innerHTML = '<span class="err">⚠️ Konekte anvan pou mete foto w.</span>'; return; }
+      let url = urlInput;
+      if (file) {
+        if (!file.type || file.type.indexOf('image/') !== 0) { st.innerHTML = '<span class="err">⚠️ Chwazi yon fichye imaj.</span>'; return; }
+        st.textContent = '⏳ N ap konprese foto a…';
+        try { url = await compressAvatar(file); }
+        catch (e) { st.innerHTML = '<span class="err">❌ Foto a pa louvri — eseye yon foto JPG oswa PNG.</span>'; return; }
+      } else if (url && !/^https?:\/\/.+/i.test(url)) { st.innerHTML = '<span class="err">⚠️ Lyen an dwe kòmanse ak https://</span>'; return; }
+      const { error } = await window._db.from('profiles').update({ avatar_url: url || null }).eq('auth_id', sessUser.id);
+      if (error) { st.innerHTML = '<span class="err">❌ ' + error.message + '</span>'; return; }
+      if (window._me) { window._me.avatar_url = url || null; renderProfileCard(window._me); }
+      st.innerHTML = '<span class="ok">✅ Foto pwofil ou anrejistre!</span>';
+    });
+  })();
+
+  async function ensureProfile(db, user, usernameHint) {
+    const { data: prof } = await db.from('profiles').select('*').eq('auth_id', user.id).maybeSingle();
+    if (prof) return prof;
+    const username = (usernameHint || (user.email ? user.email.split('@')[0] : 'Itilizatè')).trim() || 'Itilizatè';
+    const { data: created, error } = await db.from('profiles').insert({ username: username, auth_id: user.id, coins: 0, bio: '' }).select().single();
+    if (error) { window._authErr = error.message; return null; }
+    return created;
+  }
+  function setupAuth(db) {
+    const emailEl = document.getElementById('authEmail');
+    const passEl = document.getElementById('authPass');
+    const userEl = document.getElementById('authUsername');
+    const st = document.getElementById('authStatus');
+    const signupBtn = document.getElementById('authSignupBtn');
+    const loginBtn = document.getElementById('authLoginBtn');
+    const logoutBtn = document.getElementById('authLogoutBtn');
+    async function refreshAuthUI() {
+      const { data: sess } = await db.auth.getSession();
+      if (sess && sess.session) {
+        st.innerHTML = '<span class="ok">✅ Ou konekte kòm ' + sess.session.user.email + '</span>';
+        signupBtn.style.display = 'none';
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'block';
+      } else {
+        st.textContent = 'Ou pa konekte — kreye kont oswa konekte pou w gen pwòp pwofil ou.';
+        signupBtn.style.display = 'block';
+        loginBtn.style.display = 'block';
+        logoutBtn.style.display = 'none';
+      }
+    }
+    signupBtn.addEventListener('click', async () => {
+      const email = emailEl.value.trim(), pass = passEl.value, username = userEl.value.trim();
+      if (!email || !pass) { st.innerHTML = '<span class="err">⚠️ Ekri imèl ou ak modpas ou.</span>'; return; }
+      if (pass.length < 6) { st.innerHTML = '<span class="err">⚠️ Modpas la dwe gen omwen 6 karaktè.</span>'; return; }
+      st.textContent = '⏳ N ap kreye kont lan…';
+      const { data, error } = await db.auth.signUp({ email: email, password: pass });
+      if (error) { st.innerHTML = '<span class="err">❌ ' + error.message + '</span>'; return; }
+      if (data.session) {
+        const prof = await ensureProfile(db, data.session.user, username);
+        if (!prof) { st.innerHTML = '<span class="err">❌ Kont lan kreye, men pwofil la pa kreye: ' + (window._authErr || '') + ' — verifye SQL auth_id a te kouri.</span>'; return; }
+        const refCode = document.getElementById('authRefCode').value.trim();
+        if (refCode) {
+          const ok = await applyReferral(db, prof, refCode);
+          if (!ok) { try { localStorage.setItem('pendingRef', refCode); } catch (e) {} }
+        }
+        st.innerHTML = '<span class="ok">✅ Kont kreye! Ou konekte kòm ' + username + '.</span>';
+        location.reload();
+      } else {
+        const refCode = document.getElementById('authRefCode').value.trim();
+        if (refCode) { try { localStorage.setItem('pendingRef', refCode); } catch (e) {} }
+        if (username) { try { localStorage.setItem('pendingUsername', username); } catch (e) {} }
+        st.innerHTML = '<span class="ok">✅ Kont lan kreye! Verifye imèl ou (lyen konfimasyon), apre sa konekte isit la.</span>';
+      }
+    });
+    loginBtn.addEventListener('click', async () => {
+      const email = emailEl.value.trim(), pass = passEl.value;
+      if (!email || !pass) { st.innerHTML = '<span class="err">⚠️ Ekri imèl ou ak modpas ou.</span>'; return; }
+      st.textContent = '⏳ N ap konekte w…';
+      const { data, error } = await db.auth.signInWithPassword({ email: email, password: pass });
+      if (error) { st.innerHTML = '<span class="err">❌ ' + error.message + '</span>'; return; }
+      if (data.session) {
+        let pendingName = null; try { pendingName = localStorage.getItem('pendingUsername'); } catch (e) {}
+        const prof = await ensureProfile(db, data.session.user, pendingName);
+        if (pendingName) { try { localStorage.removeItem('pendingUsername'); } catch (e) {} }
+        if (!prof) { st.innerHTML = '<span class="err">❌ Ou konekte, men pwofil la pa kreye: ' + (window._authErr || '') + '</span>'; return; }
+        const refCode = document.getElementById('authRefCode').value.trim();
+        if (refCode && !prof.referred_by) { await applyReferral(db, prof, refCode); }
+        st.innerHTML = '<span class="ok">✅ Ou konekte!</span>';
+        location.reload();
+      }
+    });
+    logoutBtn.addEventListener('click', async () => {
+      await db.auth.signOut();
+      location.reload();
+    });
+    refreshAuthUI();
+  }
+
+  // ===== REFERAL AK TACH CHAK JOU =====
+  function localDateStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  async function applyReferral(db, prof, code) {
+    if (!code || prof.referred_by) return false;
+    const { data: inv } = await db.from('profiles').select('id').eq('username', code).maybeSingle();
+    if (!inv || inv.id === prof.id) return false;
+    const { error } = await db.from('profiles').update({ referred_by: inv.id }).eq('id', prof.id);
+    if (error) return false;
+    prof.referred_by = inv.id;
+    return true;
+  }
+  window._claimedTasks = window._claimedTasks || new Set();
+  window._giftCount = window._giftCount || 0;
+  window._playCount = window._playCount || 0;
+  window._watchSecs = window._watchSecs || 0;
+  const TASK_REQ = {
+    login: () => !!window._sessionUser,
+    watch: () => (window._watchSecs || 0) >= 1800,
+    gifts: () => (window._giftCount || 0) >= 5,
+    plays: () => (window._playCount || 0) >= 3
+  };
+  function updateTaskUI() {
+    const g = (id) => document.getElementById(id);
+    const claimed = window._claimedTasks || new Set();
+    const rows = [
+      ['login', 'taskLoginProg', 'taskLoginBtn', ''],
+      ['watch', 'taskWatchProg', 'taskWatchBtn', Math.floor((window._watchSecs || 0) / 60) + '/30 minit'],
+      ['gifts', 'taskGiftProg', 'taskGiftBtn', (window._giftCount || 0) + '/5 kado'],
+      ['plays', 'taskPlayProg', 'taskPlayBtn', (window._playCount || 0) + '/3 jwèt']
+    ];
+    rows.forEach(([key, progId, btnId, prog]) => {
+      const progEl = g(progId), btn = g(btnId);
+      if (!progEl || !btn) return;
+      if (claimed.has(key)) { progEl.textContent = '✅ Reklame jodi a'; btn.disabled = true; btn.style.opacity = '0.5'; }
+      else {
+        if (key === 'login') progEl.textContent = window._sessionUser ? 'Pare pou reklame' : 'Konekte anvan';
+        else progEl.textContent = prog;
+        const ok = window._sessionUser && TASK_REQ[key]();
+        btn.disabled = !ok; btn.style.opacity = ok ? '1' : '0.5';
+      }
+    });
+  }
+  async function claimTask(taskKey, reward) {
+    const st = document.getElementById('taskStatus');
+    const db = window._db, me = window._me;
+    if (!window._sessionUser) { st.innerHTML = '<span class="err">⚠️ Konekte anvan w reklame yon tach.</span>'; return; }
+    if (!me) return;
+    if (!TASK_REQ[taskKey]()) { st.innerHTML = '<span class="err">⚠️ Ou poko fini tach sa a.</span>'; return; }
+    const today = localDateStr();
+    const { data: existing } = await db.from('task_claims').select('id').eq('user_id', me.id).eq('task_key', taskKey).eq('claim_date', today);
+    if (existing && existing.length) { window._claimedTasks.add(taskKey); updateTaskUI(); st.textContent = 'Ou deja reklame tach sa a jodi a.'; return; }
+    const { error: cErr } = await db.from('task_claims').insert({ user_id: me.id, task_key: taskKey, claim_date: today, coins_awarded: reward });
+    if (cErr) { st.innerHTML = '<span class="err">❌ Reklamasyon an pa pase: ' + cErr.message + '</span>'; return; }
+    const { error: uErr } = await db.from('profiles').update({ coins: me.coins + reward }).eq('id', me.id);
+    if (uErr) { st.innerHTML = '<span class="err">❌ Coins yo pa ajoute: ' + uErr.message + ' — di Astro.</span>'; return; }
+    me.coins += reward;
+    renderProfileCard(me);
+    window._claimedTasks.add(taskKey);
+    st.innerHTML = '<span class="ok">🎉 Ou resevwa ' + reward + ' coins pou tach la!</span>';
+    updateTaskUI();
+  }
+  async function initReferralTasks(db) {
+    const me = window._me;
+    const refInfo = document.getElementById('refInfo');
+    if (me && window._sessionUser && refInfo) {
+      const { data: invites } = await db.from('profiles').select('id').eq('referred_by', me.id);
+      refInfo.innerHTML = '🎟️ <b>Kòd referal ou:</b> ' + me.username + '<br>👥 <b>Moun ou envite:</b> ' + ((invites && invites.length) || 0) + '<br>🎁 <b>Bonis referal ou resevwa:</b> ' + (me.referral_earned || 0) + ' coins';
+    }
+    if (window._sessionUser && window._sessionUser.email === 'pierreshelo1@gmail.com') {
+      document.getElementById('creditSection').style.display = 'block';
+      document.getElementById('platformSection').style.display = 'block';
+      loadPlatformStats();
+      document.getElementById('platformRefreshBtn').addEventListener('click', loadPlatformStats);
+    }
+    if (me && window._sessionUser) {
+      document.getElementById('receivedSection').style.display = 'block';
+      loadReceivedGifts();
+      document.getElementById('receivedRefreshBtn').addEventListener('click', loadReceivedGifts);
+    }
+    if (me && window._sessionUser) {
+      const { data: claims } = await db.from('task_claims').select('task_key').eq('user_id', me.id).eq('claim_date', localDateStr());
+      (claims || []).forEach(c => window._claimedTasks.add(c.task_key));
+    }
+    document.getElementById('taskLoginBtn').addEventListener('click', () => claimTask('login', 10));
+    document.getElementById('taskWatchBtn').addEventListener('click', () => claimTask('watch', 500));
+    document.getElementById('taskGiftBtn').addEventListener('click', () => claimTask('gifts', 200));
+    document.getElementById('taskPlayBtn').addEventListener('click', () => claimTask('plays', 300));
+    document.getElementById('creditBtn').addEventListener('click', creditRecharge);
+    document.getElementById('ptsBtn').addEventListener('click', async () => {
+      const st = document.getElementById('ptsStatus');
+      const username = document.getElementById('ptsUser').value.trim();
+      const amt = parseInt(document.getElementById('ptsAmount').value, 10) || 0;
+      if (!username || !amt) { st.innerHTML = '<span class="err">⚠️ Ekri non itilizatè a ak kantite pwen an.</span>'; return; }
+      const db = window._db;
+      const { data: prof } = await db.from('profiles').select('*').eq('username', username).maybeSingle();
+      if (!prof) { st.innerHTML = '<span class="err">❌ Itilizatè pa jwenn: ' + username + '</span>'; return; }
+      const nv = Math.max(0, (prof.game_points || 0) + amt);
+      const { error: uErr } = await db.from('profiles').update({ game_points: nv }).eq('id', prof.id);
+      if (uErr) { st.innerHTML = '<span class="err">❌ Ajisteman an pa pase: ' + uErr.message + '</span>'; return; }
+      if (window._me && prof.id === window._me.id) { window._me.game_points = nv; renderProfileCard(window._me); }
+      st.innerHTML = '<span class="ok">✅ ' + username + ' gen kounye a ' + nv.toLocaleString() + ' pwen.</span>';
+    });
+    document.getElementById('coinsBtn').addEventListener('click', async () => {
+      const st = document.getElementById('coinsStatus');
+      const username = document.getElementById('coinsUser').value.trim();
+      const amt = parseInt(document.getElementById('coinsAmount').value, 10) || 0;
+      if (!username || !amt) { st.innerHTML = '<span class="err">⚠️ Ekri non itilizatè a ak kantite coins lan.</span>'; return; }
+      const db = window._db;
+      const { data: prof } = await db.from('profiles').select('*').eq('username', username).maybeSingle();
+      if (!prof) { st.innerHTML = '<span class="err">❌ Itilizatè pa jwenn: ' + username + '</span>'; return; }
+      const nv = Math.max(0, (prof.coins || 0) + amt);
+      const { error: uErr } = await db.from('profiles').update({ coins: nv }).eq('id', prof.id);
+      if (uErr) { st.innerHTML = '<span class="err">❌ Ajisteman an pa pase: ' + uErr.message + '</span>'; return; }
+      if (window._me && prof.id === window._me.id) { window._me.coins = nv; renderProfileCard(window._me); }
+      st.innerHTML = '<span class="ok">✅ ' + username + ' gen kounye a ' + nv.toLocaleString() + ' coins.</span>';
+    });
+    setInterval(() => {
+      try {
+        if (typeof panelActive !== 'undefined' && panelActive && !isPanelHost) {
+          window._watchSecs += 10;
+          updateTaskUI();
+        }
+      } catch (e) {}
+    }, 10000);
+    updateTaskUI();
+  }
+  async function creditRecharge() {
+    const st = document.getElementById('creditStatus');
+    const db = window._db;
+    const username = document.getElementById('creditUser').value.trim();
+    const dollars = parseFloat(document.getElementById('creditDollars').value) || 0;
+    if (!username || dollars <= 0) { st.innerHTML = '<span class="err">⚠️ Ekri non itilizatè a ak montan an dola.</span>'; return; }
+    const { data: prof } = await db.from('profiles').select('*').eq('username', username).maybeSingle();
+    if (!prof) { st.innerHTML = '<span class="err">❌ Itilizatè pa jwenn: ' + username + '</span>'; return; }
+    const isFirst = (prof.recharge_count || 0) === 0;
+    let coins = Math.floor(dollars * 10000);
+    if (isFirst) coins = Math.floor(coins * 1.3);
+    const { error: uErr } = await db.from('profiles').update({ coins: prof.coins + coins, recharge_count: (prof.recharge_count || 0) + 1 }).eq('id', prof.id);
+    if (uErr) { st.innerHTML = '<span class="err">❌ Kredite a pa pase: ' + uErr.message + '</span>'; return; }
+    let bonusMsg = '';
+    if (isFirst && prof.referred_by) {
+      const bonus = Math.floor(coins * 0.10);
+      const { data: inv } = await db.from('profiles').select('*').eq('id', prof.referred_by).maybeSingle();
+      if (inv) {
+        await db.from('profiles').update({ coins: inv.coins + bonus, referral_earned: (inv.referral_earned || 0) + bonus }).eq('id', inv.id);
+        bonusMsg = ' 🎁 Envite a (' + inv.username + ') resevwa ' + bonus + ' coins bonis referal (10%)!';
+      }
+    }
+    if (window._me && prof.id === window._me.id) { window._me.coins = prof.coins + coins; window._me.recharge_count = (prof.recharge_count || 0) + 1; renderProfileCard(window._me); }
+    st.innerHTML = '<span class="ok">✅ ' + username + ' resevwa ' + coins.toLocaleString() + ' coins' + (isFirst ? ' (premye rechaje, +30%!)' : '') + '.' + bonusMsg + '</span>';
+  }
+
+  async function start() {
+    if (SUPABASE_ANON_KEY === "KOLE_KLE_ANON_OU_LA") {
+      statusEl.innerHTML = '<span class="err">⚠️ Kle anon an poko mete. Mande Astro mete l.</span>';
+      return;
+    }
+    if (!window.supabase) {
+      statusEl.innerHTML = '<span class="err">⚠️ Bibliyotèk koneksyon an pa chaje. Louvri fichye a dirèkteman nan Chrome (telechaje l anvan) — apèsi anndan app la bloke koneksyon an.</span>';
+      return;
+    }
+    try {
+      const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      window._db = db;
+      setupAuth(db);
+      await loadData(db);
+      await initReferralTasks(db);
+    } catch (e) {
+      statusEl.innerHTML = '<span class="err">❌ Erè: ' + e.message + '</span>';
+    }
+  }
+
+  async function loadData(db) {
+
+    // Pwofil mwen: si konekte, pwofil kont lan; sinon premye pwofil la (mòd tès)
+    let p = null;
+    const { data: sess } = await db.auth.getSession();
+    if (sess && sess.session) window._sessionUser = sess.session.user;
+    if (sess && sess.session) {
+      let pendingName = null; try { pendingName = localStorage.getItem('pendingUsername'); } catch (e) {}
+      p = await ensureProfile(db, sess.session.user, pendingName);
+      if (p && pendingName) { try { localStorage.removeItem('pendingUsername'); } catch (e) {} }
+      if (!p) { statusEl.innerHTML = '<span class="err">❌ Pwofil la pa kreye: ' + (window._authErr || '') + ' — verifye SQL auth_id a te kouri.</span>'; return; }
+    }
+    if (!p) {
+      const { data: profiles, error: pErr } = await db.from('profiles').select('*').limit(1);
+      if (pErr) { statusEl.innerHTML = '<span class="err">❌ Erè koneksyon: ' + pErr.message + '</span>'; return; }
+      if (profiles && profiles.length) p = profiles[0];
+    }
+    if (p) {
+      window._me = p;
+      renderProfileCard(p);
+    }
+
+    // Aplike kòd referal ki te anrejistre nan enskripsyon an (si li poko aplike)
+    try {
+      const pendingRef = localStorage.getItem('pendingRef');
+      if (p && window._sessionUser && !p.referred_by && pendingRef) {
+        await applyReferral(db, p, pendingRef);
+        localStorage.removeItem('pendingRef');
+      }
+    } catch (e) {}
+
+    // Live yo
+    const { data: streams } = await db.from('streams').select('*').order('started_at', { ascending: false });
+    const sEl = document.getElementById('streams');
+    if (streams && streams.length) {
+      sEl.innerHTML = streams.map(s =>
+        '<div class="card">' + (s.is_live ? '<span class="live-badge">LIVE</span>' : '<span class="off-badge">FINI</span>') +
+        ' <strong>' + s.title + '</strong></div>').join('');
+    } else {
+      sEl.innerHTML = '<div class="card">Pa gen live kounye a.</div>';
+    }
+
+    // Kado yo
+    const { data: gifts } = await db.from('gifts').select('*').order('price_coins', { ascending: true });
+    const gEl = document.getElementById('gifts');
+    if (gifts && gifts.length) {
+      const giftEmoji = GIFT_EMOJI;
+      gEl.innerHTML = gifts.map(g => {
+        const visual = g.image_url
+          ? '<img src="' + g.image_url + '" style="width:48px; height:48px; object-fit:contain;">'
+          : '<span style="font-size:32px;">' + (giftEmoji[g.name] || '🎁') + '</span>';
+        return '<div class="gift">' + visual + '<br><strong>' + g.name + '</strong><br><span class="price">' + g.price_coins + ' coins</span></div>';
+      }).join('');
+      const me = window._me || { id: 1, username: 'Shelo' };
+      const streamId = (streams && streams.length) ? streams[0].id : 1;
+      const hostId = (streams && streams.length) ? streams[0].host_id : 1;
+      gEl.querySelectorAll('.gift').forEach((el, i) => {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', () => sendGift(db, gifts[i], me, streamId, hostId));
+      });
+    }
+
+    window._streamId = (streams && streams.length) ? streams[0].id : 1;
+    setupChat(db, window._me || { id: 1, username: 'Shelo' }, (streams && streams.length) ? streams[0].id : 1);
+
+    statusEl.innerHTML = '<span class="ok">✅ Konekte ak baz done SheRoosLive la!</span>';
+  }
+
+  // ===== EMOJI KADO YO =====
+  const GIFT_EMOJI = { 'Rose': '🌹', 'Ke': '❤️', 'Kè': '❤️', 'Machin': '🚗', 'Machine': '🚗', 'Choublak': '🌺', 'Bannann': '🍌', 'Mango': '🥭', 'Pikliz': '🌶️', 'Anana': '🍍', 'Soup Joumou': '🍲', 'Kafè': '☕', 'Pistach': '🥜', 'Kokoye': '🥥', 'Fresko': '🍧', 'Diri Djondjon': '🍚', 'Griyo': '🍖', 'Tap Tap': '🚌', 'Bwat Sipriz': '🎁', 'Kremas': '🥃', 'Tablo': '🎨', 'Tanbou': '🥁', 'Lanbi': '🐚', 'Palmis': '🌴', 'Kè Ayiti': '💙', 'Drapo': '🇭🇹', 'Palè San Sousi': '👑', 'Sitadèl': '🏰', 'Trezo Sitadèl': '💎', 'Lejand Ayisyen': '🌟' };
+
+  // ===== SELEBRASYON KADO (Drapo, Bwat Sipriz, Lejand) =====
+  const celebStyle = document.createElement('style');
+  celebStyle.textContent = '@keyframes celebFall { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; } } @keyframes celebWave { 0%,100% { transform: scale(1) rotate(-2deg); } 50% { transform: scale(1.08) rotate(2deg); } }';
+  document.head.appendChild(celebStyle);
+
+  let lastCeleb = 0;
+  function celebrateCustom(big, pieces) {
+    const now = Date.now();
+    if (now - lastCeleb < 4000) return;
+    lastCeleb = now;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; pointer-events:none;';
+    overlay.innerHTML = big;
+    pieces.forEach((p, i) => {
+      const s = document.createElement('span');
+      s.textContent = p;
+      s.style.cssText = 'position:absolute; top:-40px; left:' + (5 + i * 12) + '%; font-size:36px; animation:celebFall 4s linear forwards; animation-delay:' + (i * 0.25) + 's;';
+      overlay.appendChild(s);
+    });
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.remove(), 5500);
+  }
+
+  function celebrate(kind) {
+    if (kind === 'drapo') {
+      celebrateCustom('<div style="font-size:120px; animation:celebWave 1s ease-in-out infinite;">🇭🇹</div>', ['💙','❤️','💙','❤️','🎉','💙','❤️','🎉']);
+    } else if (kind === 'lejand') {
+      celebrateCustom('<div style="font-size:64px; font-weight:bold; color:#ffd700; text-shadow:2px 2px 8px #000; text-align:center;">🌟 LEJAND AYISYEN 🌟<br><span style="font-size:32px;">🇭🇹</span></div>', ['🌟','💎','🌟','💎','✨','🌟','💎','✨']);
+    } else {
+      const shows = [
+        { big: '<div style="font-size:120px; animation:celebWave 1s ease-in-out infinite;">🇭🇹</div>', pieces: ['💙','❤️','🎉'] },
+        { big: '<div style="font-size:120px;">🎆</div>', pieces: ['✨','🎇','✨','🎆'] },
+        { big: '<div style="font-size:120px;">❤️💙</div>', pieces: ['❤️','💙','❤️','💙'] }
+      ];
+      const pick = shows[Math.floor(Math.random() * shows.length)];
+      celebrateCustom(pick.big, pick.pieces.concat(pick.pieces));
+    }
+  }
+
+  // Gwo kado yo pran tout ekran an (fon nwa + gwo emoji + non an lò + lapli konfeti)
+  function celebrateTakeover(name, emoji, colors) {
+    const now = Date.now();
+    if (now - lastCeleb < 4000) return;
+    lastCeleb = now;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; background:rgba(0,0,0,0.45);';
+    overlay.innerHTML = '<div style="font-size:170px; animation:celebWave 1s ease-in-out infinite;">' + emoji + '</div>' +
+      '<div style="font-size:56px; font-weight:bold; color:#ffd700; text-shadow:3px 3px 10px #000; text-align:center; margin-top:10px;">' + name + '</div>';
+    for (let i = 0; i < 24; i++) {
+      const s = document.createElement('span');
+      s.textContent = colors[i % colors.length];
+      const size = 28 + Math.floor(Math.random() * 30);
+      s.style.cssText = 'position:absolute; top:-60px; left:' + Math.floor(Math.random() * 95) + '%; font-size:' + size + 'px; animation:celebFall 5s linear forwards; animation-delay:' + (Math.random() * 1.5).toFixed(2) + 's;';
+      overlay.appendChild(s);
+    }
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.remove(), 7000);
+  }
+
+  function celebrateForGift(name) {
+    if (name === 'Drapo') { celebrateTakeover('Drapo', '🇭🇹', ['💙','❤️','💙','❤️','🎉']); return; }
+    if (name === 'Bwat Sipriz') { celebrate('surprise'); return; }
+    if (['Palè San Sousi', 'Sitadèl', 'Trezo Sitadèl', 'Lejand Ayisyen'].includes(name)) {
+      celebrateTakeover(name, GIFT_EMOJI[name] || '🌟', ['🌟','💎','✨']);
+      return;
+    }
+    const emoji = GIFT_EMOJI[name] || '🎁';
+    celebrateCustom('<div style="font-size:120px; animation:celebWave 1s ease-in-out infinite;">' + emoji + '</div>', [emoji, emoji, '🎉', '✨', emoji, '🎉']);
+  }
+
+  // ===== VOYE KADO =====
+  async function sendGift(db, g, me, streamId, hostId) {
+    const st = document.getElementById('giftStatus');
+    const giftEmoji = GIFT_EMOJI;
+    if (!window._sessionUser) { st.innerHTML = '<span class="err">❌ Konekte anvan ou voye kado.</span>'; return; }
+    const price = g.price_coins || 0;
+    const receiverId = hostId || me.id;
+    const { data: senderProf } = await db.from('profiles').select('coins').eq('id', me.id).maybeSingle();
+    const bal = senderProf ? senderProf.coins : (me.coins || 0);
+    if (bal < price) { st.innerHTML = '<span class="err">❌ Ou pa gen ase coins pou kado sa a (' + price + ' coins).</span>'; return; }
+    st.textContent = '⏳ N ap voye ' + g.name + '...';
+    const { error } = await db.from('gift_transactions').insert({ sender_id: me.id, receiver_id: receiverId, gift_id: g.id, stream_id: streamId });
+    if (error) { st.innerHTML = '<span class="err">❌ Kado a pa ale : ' + error.message + '</span>'; return; }
+    const share = Math.floor(price * 0.7);
+    if (receiverId === me.id) {
+      const { error: dErr } = await db.from('profiles').update({ coins: bal - price + share }).eq('id', me.id);
+      if (dErr) { st.innerHTML = '<span class="err">❌ Dediksyon an echwe : ' + dErr.message + '</span>'; return; }
+      me.coins = bal - price + share;
+    } else {
+      const { error: dErr } = await db.from('profiles').update({ coins: bal - price }).eq('id', me.id);
+      if (dErr) { st.innerHTML = '<span class="err">❌ Dediksyon an echwe : ' + dErr.message + '</span>'; return; }
+      me.coins = bal - price;
+      const { data: recvProf } = await db.from('profiles').select('coins').eq('id', receiverId).maybeSingle();
+      if (recvProf) await db.from('profiles').update({ coins: (recvProf.coins || 0) + share }).eq('id', receiverId);
+    }
+    renderProfileCard(me);
+    window._giftCount = (window._giftCount || 0) + 1; updateTaskUI();
+    const pkMark = (window._pk && window._pkSide) ? ' [PK:' + window._pkSide + ']' : '';
+    try { const lk = levelSentKey(me.username); localStorage.setItem(lk, String(levelGetSent(me.username) + price)); } catch (e) {}
+    await db.from('messages').insert({ text: '🎁 ' + me.username + ' voye ' + (giftEmoji[g.name] || '') + ' ' + g.name + ' (' + g.price_coins + ' coins)!' + pkMark + ' [NIVO:' + levelFromSent(levelGetSent(me.username)) + ']', stream_id: streamId, sender_id: me.id });
+    if (window._pk) { window._pk.myGifted = (window._pk.myGifted || 0) + price; pkUpdateBoard(); }
+    if (window._pk && window._pkSide) {
+      const giftedBefore = (window._pk.myGifted || 0) - price;
+      if (giftedBefore < 100 && (window._pk.myGifted || 0) >= 100) {
+        await db.from('messages').insert({ text: '🥊 ' + me.username + ' genyen yon gan pou Kan ' + PK_SIDES[window._pkSide].name + '! Peze bouton gan an pou itilize l (×5, 30s).', stream_id: streamId, sender_id: me.id });
+      }
+      // Bonis FWA yo otomatik kounye a (lansman + apre chak FWA fini) — pa gen bonis sou kado ankò.
+    }
+    celebrateForGift(g.name);
+    st.innerHTML = '<span class="ok">✅ Ou voye ' + g.name + ' la! (' + price + ' coins dedwi, animatè a resevwa ' + share + ' coins.) Gade nan chat la 👇</span>';
+  }
+
+  // ===== KADO M RESEVWA + SALÈ PLATFÒM =====
+  async function loadReceivedGifts() {
+    const db = window._db, me = window._me;
+    const el = document.getElementById('receivedList');
+    if (!db || !me || !window._sessionUser) return;
+    el.textContent = '⏳ N ap chaje kado ou resevwa yo...';
+    const { data: txs, error: tErr } = await db.from('gift_transactions').select('*').eq('receiver_id', me.id).order('created_at', { ascending: false }).limit(30);
+    if (tErr) { el.innerHTML = '<span class="err">❌ Pa ka chaje kado yo: ' + tErr.message + '</span>'; return; }
+    if (!txs || !txs.length) { el.innerHTML = 'Ou poko resevwa okenn kado.'; return; }
+    const { data: gifts } = await db.from('gifts').select('id, name, price_coins');
+    const gmap = {};
+    (gifts || []).forEach(g => gmap[g.id] = g);
+    const { data: profs } = await db.from('profiles').select('id, username');
+    const pmap = {};
+    (profs || []).forEach(p => pmap[p.id] = p.username);
+    let total = 0;
+    el.innerHTML = txs.map(t => {
+      const g = gmap[t.gift_id] || { name: 'Kado', price_coins: 0 };
+      const share = Math.floor((g.price_coins || 0) * 0.7);
+      total += share;
+      return '<div>🎁 <strong>' + g.name + '</strong> — soti nan men <strong>' + (pmap[t.sender_id] || 'Yon moun') + '</strong> — ou resevwa <strong>' + share + ' coins</strong></div>';
+    }).join('');
+    el.innerHTML += '<div style="margin-top:8px;"><strong>Total ou resevwa nan kado: ' + total.toLocaleString() + ' coins</strong></div>';
+  }
+
+  async function loadPlatformStats() {
+    const db = window._db;
+    const el = document.getElementById('platformStats');
+    if (!db) return;
+    el.textContent = '⏳ N ap kalkile...';
+    const { data: txs, error: tErr } = await db.from('gift_transactions').select('gift_id');
+    if (tErr) { el.innerHTML = '<span class="err">❌ Pa ka kalkile: ' + tErr.message + '</span>'; return; }
+    const { data: gifts } = await db.from('gifts').select('id, price_coins');
+    const pmap = {};
+    (gifts || []).forEach(g => pmap[g.id] = g.price_coins || 0);
+    let totalGifted = 0, platform = 0;
+    (txs || []).forEach(t => {
+      const price = pmap[t.gift_id] || 0;
+      totalGifted += price;
+      platform += Math.floor(price * 0.3);
+    });
+    el.innerHTML = '🎁 <b>Total kado voye:</b> ' + (txs || []).length + '<br>🪙 <b>Total coins kado:</b> ' + totalGifted.toLocaleString() + ' coins<br>💰 <b>Pati platfòm (30%):</b> ' + platform.toLocaleString() + ' coins';
+  }
+
+  // ===== PWEN JWÈT REYÈL =====
+  async function spendCoins(amount) {
+    const db = window._db, me = window._me;
+    if (!me || !window._sessionUser) return false;
+    const { data: prof } = await db.from('profiles').select('coins').eq('id', me.id).maybeSingle();
+    const bal = prof ? prof.coins : me.coins;
+    if (bal < amount) return false;
+    const { error } = await db.from('profiles').update({ coins: bal - amount }).eq('id', me.id);
+    if (error) return false;
+    me.coins = bal - amount;
+    renderProfileCard(me);
+    return true;
+  }
+  async function awardPoints(userId, points) {
+    if (!points || points <= 0) return;
+    const db = window._db;
+    let cur = 0;
+    const { data: prof } = await db.from('profiles').select('game_points').eq('id', userId).maybeSingle();
+    if (prof) cur = prof.game_points || 0;
+    else if (window._me && userId === window._me.id) cur = window._me.game_points || 0;
+    else return;
+    await db.from('profiles').update({ game_points: cur + points }).eq('id', userId);
+    if (window._me && userId === window._me.id) { window._me.game_points = cur + points; renderProfileCard(window._me); }
+  }
+
+  // ===== QUIZ LIVE =====
+  window._quiz = null;
+  function normAnswer(s) { return (s || '').toLowerCase().trim().replace(/\s+/g, ' '); }
+  async function startQuiz() {
+    const q = document.getElementById('quizQuestion').value.trim();
+    const a = document.getElementById('quizAnswer').value.trim();
+    const fee = parseInt(document.getElementById('quizFee').value, 10) || 0;
+    const st = document.getElementById('quizStatus');
+    if (!q || !a) { st.innerHTML = '<span class="err">❌ Ekri kesyon an ak bon repons lan anvan.</span>'; return; }
+    const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+    window._quiz = { answer: normAnswer(a), fee: fee, pot: 0, entrants: {} };
+    await db.from('messages').insert({ text: '🎯 QUIZ! Kesyon: ' + q + ' — Antre: ' + fee + ' coins (peze Antre anvan w reponn). Premye bon repons nan chat la genyen 70% po a! 🏆', stream_id: streamId, sender_id: me.id });
+    st.innerHTML = '<span class="ok">🎯 Quiz la ap jwe! N ap tann premye bon repons lan… (Repons: ' + a + ')</span>';
+  }
+  document.getElementById('quizStartBtn').addEventListener('click', startQuiz);
+  document.getElementById('quizStopBtn').addEventListener('click', async () => {
+    const st = document.getElementById('quizStatus');
+    if (!window._quiz) { st.innerHTML = 'Pa gen Quiz k ap jwe kounye a.'; return; }
+    const ans = document.getElementById('quizAnswer').value.trim();
+    const q = window._quiz;
+    window._quiz = null;
+    const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+    let refundMsg = '';
+    if (q && q.entrants) {
+      const ids = Object.keys(q.entrants);
+      for (const eid of ids) {
+        const feeBack = q.entrants[eid] || 0;
+        if (!feeBack) continue;
+        const { data: ep } = await db.from('profiles').select('coins').eq('id', parseInt(eid, 10)).maybeSingle();
+        if (ep) await db.from('profiles').update({ coins: ep.coins + feeBack }).eq('id', parseInt(eid, 10));
+      }
+      if (ids.length) refundMsg = ' Antre yo ranbouse.';
+    }
+    await db.from('messages').insert({ text: '⏹ Quiz la fini. Bon repons lan te: ' + ans, stream_id: streamId, sender_id: me.id });
+    st.innerHTML = '⏹ Quiz la kanpe.' + refundMsg;
+  });
+
+  document.getElementById('quizJoinBtn').addEventListener('click', async () => {
+    const st = document.getElementById('quizStatus');
+    if (!window._sessionUser) { st.innerHTML = '<span class="err">❌ Konekte anvan w antre nan Quiz la.</span>'; return; }
+    if (!window._quizLive) { st.innerHTML = '<span class="err">❌ Pa gen Quiz k ap jwe kounye a.</span>'; return; }
+    if (window._quizJoined) { st.innerHTML = 'Ou deja antre nan Quiz sa a. 🎟️'; return; }
+    const fee = window._quizFee || 10;
+    const db = window._db, me = window._me, streamId = window._streamId || 1;
+    const ok = await spendCoins(fee);
+    if (!ok) { st.innerHTML = '<span class="err">❌ Ou pa gen ase coins pou antre (' + fee + ' coins).</span>'; return; }
+    await db.from('messages').insert({ text: '[QUIZ:ANTRE:' + fee + ']', stream_id: streamId, sender_id: me.id });
+    window._quizJoined = true;
+    st.innerHTML = '<span class="ok">🎟️ Ou antre nan Quiz la (' + fee + ' coins)! Premye bon repons genyen 70% po a.</span>';
+  });
+
+  // ===== PK BATTLE =====
+  window._pk = null;
+  window._pkSide = null;
+  window._pkTimer = null;
+  const PK_SIDES = { BLE: { name: 'Ble', color: '#2563eb', emoji: '🟦' }, WOUJ: { name: 'Wouj', color: '#dc2626', emoji: '🟥' }, VET: { name: 'Vèt', color: '#0e9f6e', emoji: '🟩' }, JON: { name: 'Jòn', color: '#f59e0b', emoji: '🟨' } };
+  function pkPlayedKey() { const u = (window._me && window._me.username) || 'guest'; return 'pkPlayed_' + u; }
+  function pkGetPlayed() { try { return parseInt(localStorage.getItem(pkPlayedKey()), 10) || 0; } catch (e) { return 0; } }
+  function pkIsVeteran() { return pkGetPlayed() >= 10; }
+  function pkGloveMax() { return pkIsVeteran() ? 2 : 1; }
+  function pkVetLine() {
+    const el = document.getElementById('pkVet'); if (!el) return;
+    const n = pkGetPlayed();
+    el.innerHTML = n >= 10 ? '🏅 <b>Veteran PK</b> (' + n + ' PK jwe) — ou gen <b>2 gan</b> pa PK!' : 'PK jwe: ' + n + '/10 pou badj Veteran PK (2 gan pa PK).';
+  }
+  function pkCountPlay() {
+    const pk = window._pk; if (!pk) return;
+    try {
+      const key = 'pkCounted_' + pkPlayedKey() + '_' + pk.endsAt;
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, '1');
+      localStorage.setItem(pkPlayedKey(), String(pkGetPlayed() + 1));
+    } catch (e) {}
+    pkVetLine();
+  }
+  function pkActiveMult(side, now) {
+    const pk = window._pk; if (!pk) return 1;
+    let m = 1;
+    const f = pk.fwa && pk.fwa[side];
+    if (f && now >= f.from && now < f.until) m = Math.max(m, f.mult);
+    const g = pk.gloves && pk.gloves[side];
+    if (g && now >= g.from && now < g.until) m = Math.max(m, 5);
+    return m;
+  }
+  function pkShowBoard() {
+    const pk = window._pk; if (!pk) return;
+    document.getElementById('pkBoard').style.display = 'block';
+    document.getElementById('pkSideRow2').style.display = pk.sides.length === 4 ? 'flex' : 'none';
+    pkUpdateBoard();
+  }
+  function pkUpdateBoard() {
+    const pk = window._pk; if (!pk) return;
+    const now = Date.now();
+    if (pk.fwaGoal) pk.sides.forEach(s => {
+      const gl = pk.fwaGoal[s];
+      if (gl && now >= gl.until && gl.progress < gl.target) {
+        delete pk.fwaGoal[s];
+        document.getElementById('pkStatus').innerHTML = '⚠️ FWA ' + gl.mult + ' Kan ' + PK_SIDES[s].name + ' pèdi — pa rive ' + gl.target + ' pwen.';
+      }
+    });
+    // Bonis otomatik: lè yon kan pa gen okenn eta FWA ankò (FWA fini oswa objektif pèdi) epi li te deja gen FWA,
+    // animatè a pwograme pwochen bonis la apre yon ti tan (15s) — FWA 2 oswa 3, kòm objektif 300 pwen / 30s.
+    if (pk.isHost) {
+      if (!pk.nextBonus) pk.nextBonus = {};
+      pk.sides.forEach(s => {
+        const hasState = (pk.fwaGoal && pk.fwaGoal[s]) || (pk.fwa && pk.fwa[s] && now < pk.fwa[s].until);
+        if (!hasState && pk.fwaHistory && pk.fwaHistory[s]) {
+          if (!pk.nextBonus[s]) pk.nextBonus[s] = now + 15000;
+          else if (now >= pk.nextBonus[s]) {
+            delete pk.nextBonus[s];
+            const mult = Math.random() < 0.5 ? 2 : 3;
+            const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+            db.from('messages').insert({ text: '⚡ PK FWA-GOAL:' + s + ':' + mult + ':300! Kan ' + PK_SIDES[s].name + ' dwe rive 300 pwen nan 30 segonn pou debloke FWA ' + mult + '!', stream_id: streamId, sender_id: me.id }).then(null, function () {});
+          }
+        } else {
+          delete pk.nextBonus[s];
+        }
+      });
+    }
+    const max = Math.max(0, ...pk.sides.map(s => pk.scores[s]));
+    document.getElementById('pkRows').innerHTML = pk.sides.map(s => {
+      const sc = pk.scores[s];
+      const w = max ? Math.round(sc / max * 100) : 0;
+      let sub = '';
+      const gl = pk.fwaGoal && pk.fwaGoal[s];
+      const fa = pk.fwa && pk.fwa[s];
+      if (gl && now < gl.until) sub = '<div style="font-size:13px; margin:2px 0 4px 118px;">⚡ FWA ' + gl.mult + ' — ' + gl.progress + '/' + gl.target + ' pwen pou debloke (' + Math.ceil((gl.until - now) / 1000) + 's)</div>';
+      else if (fa && now >= fa.from && now < fa.until) sub = '<div style="font-size:13px; margin:2px 0 4px 118px;">⚡ FWA ' + fa.mult + ' aktif (' + Math.ceil((fa.until - now) / 1000) + 's)</div>';
+      return '<div style="display:flex; align-items:center; gap:8px; margin-top:4px;"><span style="width:110px; font-weight:bold;">' + PK_SIDES[s].emoji + ' ' + pk.names[s] + '</span><div style="flex:1; height:18px; background:#333; border-radius:9px; overflow:hidden;"><div style="background:' + PK_SIDES[s].color + '; width:' + w + '%; height:100%;"></div></div><span>' + sc + ' pwen</span></div>' + sub;
+    }).join('');
+    const left = Math.max(0, Math.ceil((pk.endsAt - now) / 1000));
+    document.getElementById('pkTimer').textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+    const fx = [];
+    if (left > 0 && left <= 10) fx.push('⚡ MOMAN SNIP!');
+    pk.sides.forEach(s => { const g = pk.gloves && pk.gloves[s]; if (g && now >= g.from && now < g.until) fx.push('🥊 Gan ' + PK_SIDES[s].name + ' (' + Math.ceil((g.until - now) / 1000) + 's)'); });
+    document.getElementById('pkFx').innerHTML = fx.length ? fx.join(' • ') : '';
+    const gb = document.getElementById('pkGloveBtn');
+    if (gb) gb.textContent = (pk.gloveCount || 0) >= pkGloveMax() ? '🥊 Gan itilize ✓' : ((pk.myGifted || 0) >= 100 ? '🥊 Mete gan (×5, 30s)' : '🥊 Gan (' + (pk.myGifted || 0) + '/100 coins)');
+    pkVetLine();
+  }
+  function pkScoreText() {
+    const pk = window._pk; if (!pk) return '';
+    return pk.sides.map(s => PK_SIDES[s].emoji + ' ' + pk.names[s] + ' ' + pk.scores[s]).join(' vs ');
+  }
+  function pkEnd(localOnly) {
+    const pk = window._pk; if (!pk) return;
+    clearInterval(window._pkTimer);
+    let best = -1, win = null, tie = false;
+    pk.sides.forEach(s => { if (pk.scores[s] > best) { best = pk.scores[s]; win = s; tie = false; } else if (pk.scores[s] === best) { tie = true; } });
+    const txt = pkScoreText();
+    window._pk = null;
+    document.getElementById('pkStatus').innerHTML = (win && !tie)
+      ? '<span class="ok">🏆 PK fini! Gayan an se ' + pk.names[win] + '! 👑 (' + txt + ')</span>'
+      : '<span class="ok">🤝 PK fini — match nil! (' + txt + ')</span>';
+    if (win && !tie) celebrateCustom('<div style="font-size:64px; font-weight:bold; color:#ffd700; text-shadow:2px 2px 8px #000; text-align:center;">👑 ' + pk.names[win] + ' 👑<br><span style="font-size:32px;">⚔️ GAYAN PK ⚔️</span></div>', ['👑','⚔️','🌟','👑','⚔️','🌟']);
+    if (!localOnly && pk.isHost) {
+      const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+      db.from('messages').insert({ text: (win && !tie) ? '🏆 PK fini! Gayan an se ' + pk.names[win] + '! 👑' : '🤝 PK fini — match nil!', stream_id: streamId, sender_id: me.id });
+    }
+  }
+  async function startPK() {
+    const mode = document.getElementById('pkMode').value;
+    const opp = document.getElementById('pkOpp').value.trim() || 'Advèsè a';
+    const mins = parseInt(document.getElementById('pkMinutes').value, 10) || 3;
+    const st = document.getElementById('pkStatus');
+    const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+    let sides, names, startMsg;
+    if (mode === '4') {
+      const o2 = document.getElementById('pkOppVet').value.trim() || 'Advèsè 2';
+      const o3 = document.getElementById('pkOppJon').value.trim() || 'Advèsè 3';
+      sides = ['BLE', 'WOUJ', 'VET', 'JON'];
+      names = { BLE: me.username, WOUJ: opp, VET: o2, JON: o3 };
+      startMsg = '⚔️ PK BATTLE 4! ' + me.username + ' (BLE) vs ' + opp + ' (WOUJ) vs ' + o2 + ' (VET) vs ' + o3 + ' (JON) — ' + mins + ' minit! Voye kado pou kan w! Chwazi kan w anvan w voye kado.';
+    } else {
+      sides = ['BLE', 'WOUJ'];
+      names = { BLE: me.username, WOUJ: opp };
+      startMsg = '⚔️ PK BATTLE! ' + me.username + ' (BLE) vs ' + opp + ' (WOUJ) — ' + mins + ' minit! Voye kado pou kan w! Chwazi kan w anvan w voye kado.';
+    }
+    const scores = {}; sides.forEach(s => scores[s] = 0);
+    window._pk = { names: names, sides: sides, scores: scores, endsAt: Date.now() + mins * 60000, isHost: true, fwa: {}, fwaGoal: {}, fwaHistory: {}, gloves: {}, gloveCount: 0, myGifted: 0 };
+    window._pkSide = 'BLE';
+    pkCountPlay();
+    await db.from('messages').insert({ text: startMsg, stream_id: streamId, sender_id: me.id });
+    // FWA 3 otomatik depi lansman: chak kan jwenn li touswit epi li aktive pou kont li, san voye kado, san klike
+    for (const s of sides) {
+      window._pk.fwa[s] = { mult: 3, from: Date.now(), until: Date.now() + 30000 };
+      window._pk.fwaHistory[s] = true;
+      await db.from('messages').insert({ text: '⚡ PK FWA-USE:' + s + ':3! Kan ' + PK_SIDES[s].name + ' aktive FWA 3 otomatikman! Kado kan sa a konte ×3 pandan 30 segonn!', stream_id: streamId, sender_id: me.id });
+    }
+    pkShowBoard();
+    st.innerHTML = '<span class="ok">⚔️ PK a ap jwe! Ou se Kan Ble. Dire: ' + mins + ' minit.</span>';
+    window._pkTimer = setInterval(() => { if (!window._pk) return; pkUpdateBoard(); if (Date.now() >= window._pk.endsAt) pkEnd(false); }, 1000);
+  }
+  async function pkPlaceGlove() {
+    const pk = window._pk, st = document.getElementById('pkStatus');
+    if (!pk) { st.innerHTML = '⚠️ Pa gen PK k ap jwe kounye a.'; return; }
+    if (!window._pkSide || !pk.sides.includes(window._pkSide)) { st.innerHTML = '⚠️ Chwazi kan w anvan w mete gan.'; return; }
+    if ((pk.gloveCount || 0) >= pkGloveMax()) { st.innerHTML = '⚠️ Ou deja itilize tout gan ou yo pou PK sa a (' + pkGloveMax() + ' gan).'; return; }
+    if ((pk.myGifted || 0) < 100) { st.innerHTML = '⚠️ Voye 100 coins kado pandan PK a pou debloke gan ou. (Ou voye ' + (pk.myGifted || 0) + ' coins deja.)'; return; }
+    pk.gloveCount = (pk.gloveCount || 0) + 1;
+    const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+    await db.from('messages').insert({ text: '🥊 PK GAN:' + window._pkSide + '! ' + (me.username || 'Yon moun') + ' mete gan pou Kan ' + PK_SIDES[window._pkSide].name + '! Kado kan sa a konte ×5 pandan 30 segonn!', stream_id: streamId, sender_id: me.id });
+    pk.gloves[window._pkSide] = { from: Date.now(), until: Date.now() + 30000 };
+    pkUpdateBoard();
+  }
+  document.getElementById('pkMode').addEventListener('change', () => { document.getElementById('pkOppExtra').style.display = document.getElementById('pkMode').value === '4' ? 'block' : 'none'; });
+  document.getElementById('pkStartBtn').addEventListener('click', startPK);
+  document.getElementById('pkStopBtn').addEventListener('click', () => { if (window._pk && window._pk.isHost) pkEnd(false); else document.getElementById('pkStatus').innerHTML = 'Pa gen PK w ap jere kounye a.'; });
+  document.getElementById('pkSideBleBtn').addEventListener('click', () => { window._pkSide = 'BLE'; if (window._pk) pkCountPlay(); document.getElementById('pkStatus').innerHTML = '🟦 Ou nan Kan Ble! Kounye a voye kado pou kan w.'; });
+  document.getElementById('pkSideWoujBtn').addEventListener('click', () => { window._pkSide = 'WOUJ'; if (window._pk) pkCountPlay(); document.getElementById('pkStatus').innerHTML = '🟥 Ou nan Kan Wouj! Kounye a voye kado pou kan w.'; });
+  document.getElementById('pkSideVetBtn').addEventListener('click', () => { window._pkSide = 'VET'; if (window._pk) pkCountPlay(); document.getElementById('pkStatus').innerHTML = '🟩 Ou nan Kan Vèt! Kounye a voye kado pou kan w.'; });
+  document.getElementById('pkSideJonBtn').addEventListener('click', () => { window._pkSide = 'JON'; if (window._pk) pkCountPlay(); document.getElementById('pkStatus').innerHTML = '🟨 Ou nan Kan Jòn! Kounye a voye kado pou kan w.'; });
+  document.getElementById('pkGloveBtn').addEventListener('click', pkPlaceGlove);
+  pkVetLine();
+
+  // ===== WOU CHANS GRATIS =====
+  const WHEEL_PRIZES = [
+    { emoji: '🎁', name: 'Bwat Sipriz', mult: 0.1 },
+    { emoji: '🇭🇹', name: 'Drapo', mult: 3 },
+    { emoji: '👑', name: 'Kouwòn', mult: 0.3 },
+    { emoji: '🌟', name: 'Lejand', mult: 1 },
+    { emoji: '🎉', name: 'Konfeti', mult: 0.05 },
+    { emoji: '😢', name: 'Pèdi!', mult: 0 },
+    { emoji: '💨', name: 'Zewo!', mult: 0 },
+    { emoji: '🔄', name: 'Ankò!', mult: 0 }
+  ];
+  let spinning = false;
+  let respins = 0;
+  async function doSpin(freeRespin) {
+    if (spinning) return;
+    const price = parseInt(document.getElementById('spinPrice').value, 10) || 0;
+    const st0 = document.getElementById('spinStatus');
+    if (!window._sessionUser) { st0.innerHTML = '<span class="err">❌ Konekte anvan w jwe pou lajan.</span>'; return; }
+    const balance = window._me ? window._me.coins : null;
+    if (!freeRespin && balance !== null && balance !== undefined && balance < price) {
+      st0.innerHTML = '<span class="err">❌ Ou pa gen ase pwen! Ou gen ' + balance + ' coins, vire a koute ' + price + ' coins.</span>';
+      return;
+    }
+    if (!freeRespin && price > 0) {
+      const ok = await spendCoins(price);
+      if (!ok) { st0.innerHTML = '<span class="err">❌ Ou pa gen ase coins! Vire a koute ' + price + ' coins.</span>'; return; }
+    }
+    spinning = true;
+    if (!freeRespin) { window._playCount = (window._playCount || 0) + 1; updateTaskUI(); }
+    const btn = document.getElementById('spinBtn');
+    const st = document.getElementById('spinStatus');
+    const wheel = document.getElementById('wheel');
+    const p = Math.floor(Math.random() * WHEEL_PRIZES.length);
+    const target = 360 * 5 + ((360 - (p * 45 + 22.5)) % 360);
+    wheel.style.transition = 'transform 5s cubic-bezier(0.15, 0.9, 0.25, 1)';
+    wheel.style.transform = 'rotate(' + target + 'deg)';
+    st.innerHTML = '🎡 Wou a ap vire…';
+    btn.disabled = true;
+    setTimeout(async () => {
+      const prize = WHEEL_PRIZES[p];
+      const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+      const isLose = (prize.name === 'Pèdi!' || prize.name === 'Zewo!');
+      const winPts = Math.max(1, Math.floor(price * (prize.mult || 0)));
+      const resultText = isLose ? 'epi li PÈDI! 😢' : (prize.name === 'Ankò!' ? 'epi genyen 🔄 Ankò! (vire ankò gratis!)' : 'epi genyen ' + prize.emoji + ' ' + prize.name + ' (miz × ' + prize.mult + ') epi li fè ' + winPts + ' pwen!');
+      await db.from('messages').insert({ text: '🎡 ' + me.username + ' vire Wou Chans la (' + (freeRespin ? 0 : price) + ' coins) ' + resultText, stream_id: streamId, sender_id: me.id });
+      spinning = false; btn.disabled = false;
+      wheel.style.transition = 'none';
+      wheel.style.transform = 'rotate(' + (target % 360) + 'deg)';
+      if (prize.name === 'Ankò!' && respins < 2) {
+        respins++;
+        st.innerHTML = '<span class="ok">🔄 Ankò! Wou a ap vire ankò gratis!</span>';
+        setTimeout(() => doSpin(true), 1500);
+        return;
+      }
+      respins = 0;
+      if (isLose) {
+        st.innerHTML = '<span>😢 Ou pèdi fwa sa — eseye ankò!</span>';
+        if (prize.name === 'Pèdi!') celebrateCustom('<div style="font-size:120px;">😢</div><div style="font-size:48px; font-weight:bold; color:#fff; text-shadow:2px 2px 8px #000; text-align:center;">PÈDI!</div>', []);
+        else celebrateCustom('<div style="font-size:120px;">💨</div><div style="font-size:48px; font-weight:bold; color:#fff; text-shadow:2px 2px 8px #000; text-align:center;">ZEWO!</div>', []);
+        return;
+      }
+      await awardPoints(me.id, winPts);
+      st.innerHTML = '<span class="ok">🎉 Ou genyen ' + prize.emoji + ' ' + prize.name + ' (miz × ' + prize.mult + ') = ' + winPts + ' pwen! ⭐ Pwen yo antre nan balans ou!</span>';
+      if (prize.name === 'Drapo') celebrateTakeover('Drapo', '🇭🇹', ['💙','❤️','💙','❤️','🎉']);
+      else if (prize.name === 'Bwat Sipriz') celebrate('surprise');
+      else if (prize.name === 'Kouwòn' || prize.name === 'Lejand') celebrateCustom('<div style="font-size:64px; font-weight:bold; color:#ffd700; text-shadow:2px 2px 8px #000; text-align:center;">' + prize.emoji + ' ' + prize.name + ' ' + prize.emoji + '</div>', ['🌟','✨','👑']);
+      else celebrateCustom('<div style="font-size:120px; animation:celebWave 1s ease-in-out infinite;">' + prize.emoji + '</div>', [prize.emoji, '🎉', '✨']);
+    }, 5200);
+  }
+  document.getElementById('spinBtn').addEventListener('click', () => { respins = 0; doSpin(false); });
+
+  function noteScrambleMsg(text) {
+    if (text.indexOf('🔤 MO ANDEZÒD') === 0) {
+      const m = text.match(/Ranje lèt sa yo: (.+?) —/);
+      const len = m ? m[1].split(' ').filter(Boolean).length : 0;
+      const pm = text.match(/miz la se (\d+) pwen/);
+      window._scrambleLive = { len: len, penalty: pm ? parseInt(pm[1], 10) : 5 };
+    } else if (text.indexOf('🏆 Gayan Mo Andezòd') === 0 || text.indexOf('⏹ Mo Andezòd la fini') === 0 || text.indexOf('⏹ Mòd otomatik Mo Andezòd la kanpe') === 0 || text.indexOf('⏰ Tan fini!') === 0) {
+      window._scrambleLive = null;
+    }
+  }
+
+  // ===== MO ANDEZÒD =====
+  window._scramble = null;
+  function shuffleWord(w) {
+    const arr = w.split('');
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr.join('');
+  }
+  async function startScramble() {
+    const w = document.getElementById('scrWord').value.trim().toUpperCase().replace(/\s+/g, '');
+    const pen = parseInt(document.getElementById('scrPenalty').value, 10) || 5;
+    const st = document.getElementById('scrStatus');
+    if (!w) { st.innerHTML = '<span class="err">❌ Ekri yon mo anvan.</span>'; return; }
+    let s = shuffleWord(w), tries = 0;
+    while (s === w && tries < 10) { s = shuffleWord(w); tries++; }
+    const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+    window._scramble = { answer: normAnswer(w), penalty: pen, word: w, pot: 0 };
+    await db.from('messages').insert({ text: '🔤 MO ANDEZÒD! Ranje lèt sa yo: ' + s.split('').join(' ') + ' — Premye bon mo ranmase po a! Mize kantite pwen ou vle: ekri mo a + kantite a (egz: AYITI 50). San kantite, miz la se ' + pen + ' pwen. Chak move repons antre nan po a!', stream_id: streamId, sender_id: me.id });
+    st.innerHTML = '<span class="ok">🔤 Mo a ap jwe! Mo kache a: ' + w + ' (melanje: ' + s + ')</span>';
+  }
+  document.getElementById('scrStartBtn').addEventListener('click', startScramble);
+  document.getElementById('scrStopBtn').addEventListener('click', async () => {
+    const st = document.getElementById('scrStatus');
+    if (!window._scramble) { st.innerHTML = 'Pa gen mo k ap jwe kounye a.'; return; }
+    const w = window._scramble.word;
+    window._scramble = null;
+    const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+    await db.from('messages').insert({ text: '⏹ Mo Andezòd la fini. Bon mo a te: ' + w, stream_id: streamId, sender_id: me.id });
+    st.innerHTML = '⏹ Mo a kanpe.';
+  });
+  const SCRAMBLE_WORDS = ['AYITI','KAY','DLO','SOLEY','LANMOU','FANMI','LEKOL','MACHE','TANBOU','GRYIO','MANJE','BATO','LAPLI','ZWAZO','KAFE','MANGO','POTE','LARI','PEYI','KOURAJ'];
+  window._scrambleAuto = false;
+  let autoTimer = null;
+  function autoRound() {
+    if (!window._scrambleAuto) return;
+    const w = SCRAMBLE_WORDS[Math.floor(Math.random() * SCRAMBLE_WORDS.length)];
+    const pen = parseInt(document.getElementById('scrPenalty').value, 10) || 5;
+    let s = shuffleWord(w), tries = 0;
+    while (s === w && tries < 10) { s = shuffleWord(w); tries++; }
+    const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+    window._scramble = { answer: normAnswer(w), penalty: pen, word: w, pot: 0 };
+    db.from('messages').insert({ text: '🔤 MO ANDEZÒD OTOMATIK! Ranje lèt sa yo: ' + s.split('').join(' ') + ' — Premye bon mo ranmase po a! Mize: mo a + kantite (egz: AYITI 50).', stream_id: streamId, sender_id: me.id });
+    document.getElementById('scrStatus').innerHTML = '<span class="ok">🔤 Mòd otomatik ap jwe! Mo kache a: ' + w + ' (melanje: ' + s + ')</span>';
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(async () => {
+      if (!window._scrambleAuto || !window._scramble) return;
+      const lost = window._scramble.word;
+      window._scramble = null;
+      await db.from('messages').insert({ text: '⏰ Tan fini! Bon mo a te: ' + lost + '. Pwochen mo a ap vini...', stream_id: streamId, sender_id: me.id });
+      autoTimer = setTimeout(autoRound, 5000);
+    }, 120000);
+  }
+  document.getElementById('scrAutoBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('scrAutoBtn');
+    if (!window._scrambleAuto) {
+      window._scrambleAuto = true;
+      btn.textContent = '⏹ Kanpe Otomatik';
+      btn.style.background = '#dc2626';
+      autoRound();
+    } else {
+      window._scrambleAuto = false;
+      clearTimeout(autoTimer);
+      window._scramble = null;
+      btn.textContent = '▶️ Mòd Otomatik';
+      btn.style.background = '#2563eb';
+      const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+      await db.from('messages').insert({ text: '⏹ Mòd otomatik Mo Andezòd la kanpe.', stream_id: streamId, sender_id: me.id });
+      document.getElementById('scrStatus').innerHTML = '⏹ Mòd otomatik kanpe.';
+    }
+  });
+
+  // ===== RECHAJE =====
+  document.getElementById('rechargeBtn').addEventListener('click', async () => {
+    const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+    await db.from('messages').insert({ text: '💵 ' + me.username + ' vle rechaje! (Shelo, mete coins yo sou kont li apre peman an)', stream_id: streamId, sender_id: me.id });
+    document.getElementById('rechargeStatus').innerHTML = '<span class="ok">💵 Peye sou Cash App, epi ekri non itilizatè w nan chat la — Shelo ap mete coins yo sou kont ou rapid! 🎉</span>';
+  });
+
+  // ===== JACKPOT AYITI =====
+  const JACK_SYMBOLS = ['🇭🇹','🏰','🥁','🍗','🌴','👑'];
+  let jackSpinning = false;
+  document.getElementById('jackBtn').addEventListener('click', async () => {
+    if (jackSpinning) return;
+    const price = parseInt(document.getElementById('jackPrice').value, 10) || 0;
+    const st = document.getElementById('jackStatus');
+    if (!window._sessionUser) { st.innerHTML = '<span class="err">❌ Konekte anvan w jwe pou lajan.</span>'; return; }
+    const balance = window._me ? window._me.coins : null;
+    if (balance !== null && balance !== undefined && balance < price) {
+      st.innerHTML = '<span class="err">❌ Ou pa gen ase pwen! Ou gen ' + balance + ' coins, vire a koute ' + price + ' coins.</span>';
+      return;
+    }
+    if (price > 0) {
+      const ok = await spendCoins(price);
+      if (!ok) { st.innerHTML = '<span class="err">❌ Ou pa gen ase coins! Vire a koute ' + price + ' coins.</span>'; return; }
+    }
+    jackSpinning = true;
+    window._playCount = (window._playCount || 0) + 1; updateTaskUI();
+    const btn = document.getElementById('jackBtn');
+    btn.disabled = true;
+    st.innerHTML = '🎰 Wou yo ap vire…';
+    const results = [0,1,2].map(() => JACK_SYMBOLS[Math.floor(Math.random() * JACK_SYMBOLS.length)]);
+    const reels = ['reel1','reel2','reel3'].map(id => document.getElementById(id));
+    const timers = reels.map((r) => setInterval(() => { r.textContent = JACK_SYMBOLS[Math.floor(Math.random() * JACK_SYMBOLS.length)]; }, 100));
+    const stops = [600, 1200, 1800];
+    stops.forEach((ms, i) => setTimeout(() => { clearInterval(timers[i]); reels[i].textContent = results[i]; }, ms));
+    setTimeout(async () => {
+      const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+      const a = results[0], b = results[1], c = results[2];
+      if (a === b && b === c) {
+        const isDrapo = (a === '🇭🇹');
+        const bigWinPoints = price * (isDrapo ? 20 : 5);
+        await awardPoints(me.id, bigWinPoints);
+        await db.from('messages').insert({ text: (isDrapo ? '🎰 JACKPOT DRAPO! ' : '🎰 BIG WIN! ') + me.username + ' frape Jackpot Ayiti a ak 3x ' + a + ' epi li fè ' + bigWinPoints.toLocaleString() + ' pwen! 👑🎉', stream_id: streamId, sender_id: me.id });
+        st.innerHTML = '<span class="ok">🎰 ' + (isDrapo ? 'JACKPOT DRAPO! ' : 'BIG WIN! ') + '3x ' + a + ' (miz × ' + (isDrapo ? 20 : 5) + ') = ' + bigWinPoints.toLocaleString() + ' pwen! ⭐ Pwen yo antre nan balans ou! 👑🎉</span>';
+        celebrateTakeover('BIG WIN • ' + bigWinPoints.toLocaleString() + ' pwen', a, ['🌟','✨','🎉','💰']);
+      } else if (a === b || b === c || a === c) {
+        const sym = (a === b) ? a : c;
+        const smallWinPoints = Math.max(1, Math.floor(price * 0.5));
+        await awardPoints(me.id, smallWinPoints);
+        await db.from('messages').insert({ text: '🎰 ' + me.username + ' jwenn 2x ' + sym + ' nan Jackpot Ayiti a epi li fè ' + smallWinPoints.toLocaleString() + ' pwen!', stream_id: streamId, sender_id: me.id });
+        st.innerHTML = '<span class="ok">🎉 2x ' + sym + ' = ' + smallWinPoints.toLocaleString() + ' pwen! Ti genyen! ⭐ Pwen yo antre nan balans ou!</span>';
+        celebrateCustom('<div style="font-size:120px;">' + sym + '</div>', [sym, '🎉']);
+      } else {
+        await db.from('messages').insert({ text: '🎰 ' + me.username + ' vire Jackpot Ayiti a — pa genyen fwa sa.', stream_id: streamId, sender_id: me.id });
+        st.innerHTML = '<span>😢 Pa genyen fwa sa — eseye ankò!</span>';
+      }
+      jackSpinning = false; btn.disabled = false;
+    }, 2000);
+  });
+
+  // ===== MANDE RETRÈ =====
+  document.getElementById('wdBtn').addEventListener('click', async () => {
+    const coins = parseInt(document.getElementById('wdCoins').value, 10) || 0;
+    const method = document.getElementById('wdMethod').value;
+    const num = document.getElementById('wdNumber').value.trim();
+    const st = document.getElementById('wdStatus');
+    if (method === 'MonCash' || method === 'NatCash') { st.innerHTML = '<span class="err">❌ ' + method + ' poko disponib — li sou antant. Chwazi PayPal oswa Cash App.</span>'; return; }
+    if (coins < 200000) { st.innerHTML = '<span class="err">❌ Minimòm retrè a se 200,000 coins ($14).</span>'; return; }
+    if (!num) { st.innerHTML = '<span class="err">❌ Ekri kont ' + method + ' ou a.</span>'; return; }
+    const usd = (coins * 0.00007).toFixed(2);
+    const db = window._db, me = window._me || { id: 1, username: 'Shelo' }, streamId = window._streamId || 1;
+    const btn = document.getElementById('wdBtn'); btn.disabled = true;
+    await db.from('messages').insert({ text: '💵 ' + me.username + ' mande retrè: ' + coins.toLocaleString() + ' coins ($' + usd + ') via ' + method + ' — nimewo: ' + num + ' — ap tann apwobasyon Shelo.', stream_id: streamId, sender_id: me.id });
+    btn.disabled = false;
+    st.innerHTML = '<span class="ok">✅ Demann ou voye! Shelo ap verifye epi apwouve l vandredi. Coins yo ap retire lè peman an fèt.</span>';
+  });
+
+  document.getElementById('wdPtsBtn').addEventListener('click', async () => {
+    const pts = parseInt(document.getElementById('wdPts').value, 10) || 0;
+    const method = document.getElementById('wdPtsMethod').value;
+    const num = document.getElementById('wdPtsNumber').value.trim();
+    const st = document.getElementById('wdPtsStatus');
+    if (method === 'MonCash' || method === 'NatCash') { st.innerHTML = '<span class="err">❌ ' + method + ' poko disponib — li sou antant. Chwazi PayPal oswa Cash App.</span>'; return; }
+    if (pts < 200000) { st.innerHTML = '<span class="err">❌ Minimòm retrè pwen an se 200,000 pwen ($10).</span>'; return; }
+    if (!window._sessionUser) { st.innerHTML = '<span class="err">❌ Konekte anvan w mande retrè.</span>'; return; }
+    if ((window._me.game_points || 0) < pts) { st.innerHTML = '<span class="err">❌ Ou pa gen ase pwen! Ou gen ' + (window._me.game_points || 0) + ' pwen.</span>'; return; }
+    if (!num) { st.innerHTML = '<span class="err">❌ Ekri kont ' + method + ' ou a.</span>'; return; }
+    const usd = (pts * 0.00005).toFixed(2);
+    const db = window._db, me = window._me, streamId = window._streamId || 1;
+    const btn = document.getElementById('wdPtsBtn'); btn.disabled = true;
+    await db.from('messages').insert({ text: '💵 ' + me.username + ' mande retrè PWEN: ' + pts.toLocaleString() + ' pwen ($' + usd + ') via ' + method + ' — nimewo: ' + num + ' — ap tann apwobasyon Shelo.', stream_id: streamId, sender_id: me.id });
+    btn.disabled = false;
+    st.innerHTML = '<span class="ok">✅ Demann ou voye! Shelo ap verifye epi apwouve l vandredi. Pwen yo ap retire lè peman an fèt.</span>';
+  });
+
+  // ===== CHAT LIVE (Supabase Realtime) =====
+  async function setupChat(db, me, streamId) {
+    const box = document.getElementById('chatBox');
+    const input = document.getElementById('chatInput');
+    const st = document.getElementById('chatStatus');
+    const { data: profs } = await db.from('profiles').select('id, username, avatar_url');
+    const pmap = {};
+    (profs || []).forEach(p => pmap[p.id] = p);
+
+    function renderMsg(m, lvl) {
+      const s = pmap[m.sender_id] || { username: 'Envite', avatar_url: null };
+      let displayText = m.text;
+      if (lvl === undefined || lvl === null) {
+        const lm = m.text.match(/ \[NIVO:(\d+)\]\s*$/);
+        if (lm) { lvl = parseInt(lm[1], 10); displayText = m.text.slice(0, lm.index); }
+      }
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; gap:8px; align-items:flex-start;';
+      if (s.avatar_url) {
+        const img = document.createElement('img');
+        img.src = s.avatar_url;
+        img.style.cssText = 'width:28px; height:28px; border-radius:50%; object-fit:cover; flex-shrink:0;';
+        row.appendChild(img);
+      } else {
+        const sp = document.createElement('span');
+        sp.textContent = '👤';
+        sp.style.fontSize = '20px';
+        row.appendChild(sp);
+      }
+      const body = document.createElement('div');
+      const name = document.createElement('strong');
+      name.textContent = s.username;
+      if (lvl) {
+        const lv = document.createElement('span');
+        lv.textContent = ' 🏆 Nivo ' + lvl;
+        lv.style.cssText = 'color:#fbbf24;';
+        name.appendChild(lv);
+      }
+      const text = document.createElement('div');
+      text.textContent = displayText;
+      body.appendChild(name);
+      body.appendChild(text);
+      row.appendChild(body);
+      box.appendChild(row);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    const { data: msgs } = await db.from('messages').select('*').order('created_at', { ascending: false }).limit(50);
+    (msgs || []).filter(m => m.text.indexOf('[PANEL:') !== 0).reverse().forEach(renderMsg);
+    (msgs || []).slice().reverse().forEach(m => {
+      noteScrambleMsg(m.text);
+      if (m.text.indexOf('🎯 QUIZ!') === 0) { const fm = m.text.match(/Antre: (\d+) coins/); if (fm) window._quizFee = parseInt(fm[1], 10); window._quizLive = true; window._quizJoined = false; }
+      if (m.text.indexOf('🏆 Gayan Quiz la se') === 0 || m.text.indexOf('⏹ Quiz la fini') === 0) { window._quizLive = false; }
+    });
+
+    db.channel('chat-live')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async payload => {
+        // Faz tès: pa filtre pa stream — tout onglè resevwa tout mesaj (chat + kontwòl panel), kèlkeswa lè yo chaje paj la
+          let msgLvl = null;
+          { const lm = payload.new.text.match(/ \[NIVO:(\d+)\]\s*$/); if (lm) { msgLvl = parseInt(lm[1], 10); payload.new.text = payload.new.text.slice(0, lm.index); } }
+          if (payload.new.text.indexOf('[PANEL:') === 0) { handlePanelControl(payload.new.text, payload.new.sender_id); return; }
+          if (payload.new.text.indexOf('[QUIZ:ANTRE:') === 0) {
+            if (window._quiz) { const f = parseInt(payload.new.text.replace(/[^0-9]/g, ''), 10) || 0; window._quiz.pot += f; window._quiz.entrants[payload.new.sender_id] = (window._quiz.entrants[payload.new.sender_id] || 0) + f; }
+            return;
+          }
+          renderMsg(payload.new, msgLvl);
+          noteScrambleMsg(payload.new.text);
+          if (payload.new.text.indexOf('🎯 QUIZ!') === 0) { const fm = payload.new.text.match(/Antre: (\d+) coins/); if (fm) window._quizFee = parseInt(fm[1], 10); window._quizLive = true; window._quizJoined = false; }
+          if (payload.new.text.indexOf('🏆 Gayan Quiz la se') === 0 || payload.new.text.indexOf('⏹ Quiz la fini') === 0) { window._quizLive = false; }
+          if (payload.new.text.includes('voye')) {
+            const hit = Object.keys(GIFT_EMOJI).sort((a, b) => b.length - a.length).find(n => payload.new.text.includes(n));
+            if (hit) celebrateForGift(hit);
+          }
+          if (window._quiz && normAnswer(payload.new.text) === window._quiz.answer) {
+            if (window._quiz.entrants[payload.new.sender_id] === undefined) {
+              // Fòk antre anvan — repons lan inyore, Quiz la kontinye
+            } else {
+              const winner = pmap[payload.new.sender_id] ? pmap[payload.new.sender_id].username : 'Yon moun';
+              const quizPrize = Math.floor(window._quiz.pot * 0.7);
+              const winnerId = payload.new.sender_id;
+              window._quiz = null;
+              await awardPoints(winnerId, quizPrize);
+              await window._db.from('messages').insert({ text: '🏆 Gayan Quiz la se ' + winner + '! Li fè ' + quizPrize + ' pwen! (Kay la kenbe 30% po a) 🎉', stream_id: streamId, sender_id: me.id });
+              document.getElementById('quizStatus').innerHTML = '<span class="ok">🏆 ' + winner + ' genyen Quiz la! (' + quizPrize + ' pwen)</span>';
+              celebrate('surprise');
+            }
+          }
+          if (window._scramble) {
+            const parts = normAnswer(payload.new.text).split(/\s+/).filter(Boolean);
+            const g = parts[0] || '';
+            if (g && g.length === window._scramble.answer.length) {
+              const stake = (parts.length > 1 && /^\d+$/.test(parts[1])) ? parseInt(parts[1], 10) : window._scramble.penalty;
+              if (g === window._scramble.answer) {
+                const winner = pmap[payload.new.sender_id] ? pmap[payload.new.sender_id].username : 'Yon moun';
+                const pot = window._scramble.pot;
+                const prize = Math.floor(pot * 0.7);
+                const winnerId = payload.new.sender_id;
+                window._scramble = null;
+                await awardPoints(winnerId, prize);
+                await window._db.from('messages').insert({ text: '🏆 Gayan Mo Andezòd la se ' + winner + '! Li ranmase po a: ' + prize + ' pwen! (Kay la kenbe 30%) 🎉', stream_id: streamId, sender_id: me.id });
+                document.getElementById('scrStatus').innerHTML = '<span class="ok">🏆 ' + winner + ' ranmase po a: ' + prize + ' pwen!</span>';
+                celebrate('surprise');
+                if (window._scrambleAuto) { clearTimeout(autoTimer); autoTimer = setTimeout(autoRound, 8000); }
+              } else {
+                window._scramble.pot += stake;
+                const loser = pmap[payload.new.sender_id] ? pmap[payload.new.sender_id].username : 'Yon moun';
+                await window._db.from('messages').insert({ text: '❌ ' + loser + ' move repons! ' + stake + ' pwen antre nan po a (Po: ' + window._scramble.pot + ' pwen)!', stream_id: streamId, sender_id: me.id });
+              }
+            }
+          }
+          if (payload.new.text.includes('PK BATTLE') && !(window._pk && window._pk.isHost)) {
+            const hostName = pmap[payload.new.sender_id] ? pmap[payload.new.sender_id].username : 'Animatè';
+            const startMs = new Date(payload.new.created_at).getTime();
+            let sides, names, mins;
+            const m4 = payload.new.text.match(/PK BATTLE 4! (.+?) \(BLE\) vs (.+?) \(WOUJ\) vs (.+?) \(VET\) vs (.+?) \(JON\) — (\d+) minit/);
+            const m2 = payload.new.text.match(/PK BATTLE! (.+?) \(BLE\) vs (.+?) \(WOUJ\) — (\d+) minit/);
+            if (m4) { sides = ['BLE', 'WOUJ', 'VET', 'JON']; names = { BLE: m4[1], WOUJ: m4[2], VET: m4[3], JON: m4[4] }; mins = parseInt(m4[5], 10); }
+            else if (m2) { sides = ['BLE', 'WOUJ']; names = { BLE: m2[1], WOUJ: m2[2] }; mins = parseInt(m2[3], 10); }
+            else { sides = ['BLE', 'WOUJ']; names = { BLE: hostName, WOUJ: 'Advèsè a' }; mins = 3; }
+            const scores = {}; sides.forEach(s => scores[s] = 0);
+            window._pk = { names: names, sides: sides, scores: scores, endsAt: startMs + mins * 60000, isHost: false, fwa: {}, fwaGoal: {}, fwaHistory: {}, gloves: {}, gloveCount: 0, myGifted: 0 };
+            window._pkSide = null;
+            pkShowBoard();
+            document.getElementById('pkStatus').innerHTML = '⚔️ PK a ap jwe! Chwazi kan w 👇';
+            clearInterval(window._pkTimer);
+            window._pkTimer = setInterval(() => { if (!window._pk) return; pkUpdateBoard(); if (Date.now() >= window._pk.endsAt) pkEnd(true); }, 1000);
+          }
+          if (window._pk && payload.new.text.includes('PK FWA-GOAL:')) {
+            const fm = payload.new.text.match(/PK FWA-GOAL:(BLE|WOUJ|VET|JON):(\d):(\d+)/);
+            if (fm && window._pk.sides.includes(fm[1])) {
+              const pk = window._pk, side = fm[1];
+              if (!pk.fwaGoal) pk.fwaGoal = {}; if (!pk.fwa) pk.fwa = {}; if (!pk.fwaHistory) pk.fwaHistory = {};
+              pk.fwaHistory[side] = true;
+              const active = pk.fwa[side] && Date.now() < pk.fwa[side].until;
+              if (!pk.fwaGoal[side] && !active) {
+                const t = new Date(payload.new.created_at).getTime();
+                pk.fwaGoal[side] = { mult: parseInt(fm[2], 10), target: parseInt(fm[3], 10), progress: 0, from: t, until: t + 30000 };
+                pkUpdateBoard();
+              }
+            }
+          }
+          if (window._pk && payload.new.text.includes('PK FWA-USE:')) {
+            const fm = payload.new.text.match(/PK FWA-USE:(BLE|WOUJ|VET|JON):(\d)/);
+            if (fm && window._pk.sides.includes(fm[1])) {
+              const pk = window._pk, side = fm[1]; const t = new Date(payload.new.created_at).getTime();
+              if (!pk.fwa) pk.fwa = {}; if (!pk.fwaHistory) pk.fwaHistory = {};
+              pk.fwaHistory[side] = true;
+              pk.fwa[side] = { mult: parseInt(fm[2], 10), from: t, until: t + 30000 };
+              pkUpdateBoard();
+            }
+          }
+          if (window._pk && payload.new.text.includes('PK GAN:')) {
+            const gm = payload.new.text.match(/PK GAN:(BLE|WOUJ|VET|JON)/);
+            if (gm) { const t = new Date(payload.new.created_at).getTime(); window._pk.gloves[gm[1]] = { from: t, until: t + 30000 }; pkUpdateBoard(); }
+          }
+          if (window._pk && payload.new.text.includes('voye')) {
+            const sm = payload.new.text.match(/\[PK:(BLE|WOUJ|VET|JON)\]/);
+            const cm = payload.new.text.match(/\((\d+) coins\)/);
+            if (sm && cm && window._pk.sides.includes(sm[1])) {
+              const giftMs = payload.new.created_at ? new Date(payload.new.created_at).getTime() : Date.now();
+              const pts = parseInt(cm[1], 10) * pkActiveMult(sm[1], giftMs);
+              window._pk.scores[sm[1]] += pts;
+              const gl = window._pk.fwaGoal && window._pk.fwaGoal[sm[1]];
+              if (gl && giftMs >= gl.from && giftMs < gl.until) {
+                gl.progress += pts;
+                if (gl.progress >= gl.target) {
+                  if (!window._pk.fwa) window._pk.fwa = {};
+                  window._pk.fwa[sm[1]] = { mult: gl.mult, from: Date.now(), until: Date.now() + 30000 };
+                  delete window._pk.fwaGoal[sm[1]];
+                  const db2 = window._db, me2 = window._me || { id: 1, username: 'Shelo' }, streamId2 = window._streamId || 1;
+                  if (payload.new.sender_id === me2.id) {
+                    db2.from('messages').insert({ text: '⚡ PK FWA-USE:' + sm[1] + ':' + gl.mult + '! Kan ' + PK_SIDES[sm[1]].name + ' aktive FWA ' + gl.mult + ' otomatikman! Kado kan sa a konte ×' + gl.mult + ' pandan 30 segonn!', stream_id: streamId2, sender_id: me2.id }).then(null, function () {});
+                  }
+                }
+              }
+              pkUpdateBoard();
+            }
+          }
+      })
+      .subscribe();
+
+    async function send() {
+      const t = input.value.trim();
+      if (!t) return;
+      if (window._scrambleLive && window._scrambleLive.len > 0) {
+        const parts = t.split(/\s+/).filter(Boolean);
+        const w = parts[0] || '';
+        if (/^[A-Za-zÀ-ÿ]+$/.test(w) && w.length === window._scrambleLive.len) {
+          const stake = (parts.length > 1 && /^\d+$/.test(parts[1])) ? parseInt(parts[1], 10) : window._scrambleLive.penalty;
+          if (!window._sessionUser) { st.innerHTML = '<span class="err">❌ Konekte anvan w mize nan Mo Andezòd la.</span>'; return; }
+          if (stake > 0) {
+            const ok = await spendCoins(stake);
+            if (!ok) { st.innerHTML = '<span class="err">❌ Ou pa gen ase coins pou mize sa a (' + stake + ' coins).</span>'; return; }
+          }
+        }
+      }
+      const clean = t.replace(/ \[NIVO:\d+\]\s*$/, '');
+      const lvl = levelFromSent(levelGetSent(me.username));
+      const { error } = await db.from('messages').insert({ text: clean + ' [NIVO:' + lvl + ']', stream_id: streamId, sender_id: me.id });
+      if (error) { st.innerHTML = '<span class="err">❌ Mesaj la pa ale : ' + error.message + '</span>'; return; }
+      input.value = '';
+      st.textContent = '';
+    }
+    document.getElementById('chatSend').addEventListener('click', send);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+  }
+
+  start();
+
+  // ===== AGORA — VIDEWO LIVE =====
+  const AGORA_APP_ID = "bf3f3561961740ae834a1c057e4d1fec";
+  const AGORA_CHANNEL = "shelololive-test";
+  let agoraClient = null, localAudioTrack = null, localVideoTrack = null;
+  let currentStreamRowId = null;
+
+  async function refreshStreams() {
+    if (!window._db) return;
+    const { data: streams } = await window._db.from('streams').select('*').order('started_at', { ascending: false });
+    const sEl = document.getElementById('streams');
+    if (streams && streams.length) {
+      sEl.innerHTML = streams.map(s =>
+        '<div class="card">' + (s.is_live ? '<span class="live-badge">LIVE</span>' : '<span class="off-badge">FINI</span>') +
+        ' <strong>' + s.title + '</strong></div>').join('');
+    } else {
+      sEl.innerHTML = '<div class="card">Pa gen live kounye a.</div>';
+    }
+  }
+
+  const liveStatus = document.getElementById('liveStatus');
+  const goLiveBtn = document.getElementById('goLiveBtn');
+  const audioLiveBtn = document.getElementById('audioLiveBtn');
+  const watchBtn = document.getElementById('watchBtn');
+  const leaveBtn = document.getElementById('leaveBtn');
+  const panelBtn = document.getElementById('panelBtn');
+  let panelActive = false, panelPublishing = false;
+  let isPanelHost = false;
+
+  // ===== PANEL 9 PLAS — griy 3x3: plas ou + envite yo + plas vid =====
+  function renderPanelSeats() {
+    if (!panelActive) return;
+    const rv = document.getElementById('remoteVideos');
+    const remotes = rv.querySelectorAll('[id^="remote-"]').length;
+    const seats = panelPublishing ? 8 : 9;
+    const want = Math.max(0, seats - remotes);
+    const have = rv.querySelectorAll('.seat-empty').length;
+    if (have === want) return;
+    rv.querySelectorAll('.seat-empty').forEach(el => el.remove());
+    for (let i = 0; i < want; i++) {
+      const d = document.createElement('div');
+      d.className = 'seat-empty';
+      d.style.cssText = 'aspect-ratio:16/9; background:#1f2937; border:2px dashed #4b5563; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:28px; color:#9ca3af;';
+      d.textContent = '🪑';
+      rv.appendChild(d);
+    }
+  }
+  new MutationObserver(() => { renderPanelSeats(); addHostControls(); }).observe(document.getElementById('remoteVideos'), { childList: true });
+
+  // ===== GRAN EKRAN — klike sou yon videyo pou agrandi l, klike ankò pou retounen =====
+  document.getElementById('panelGrid').addEventListener('click', (e) => {
+    if (!panelActive) return;
+    const tile = e.target.closest('#localVideo, [id^="remote-"]');
+    if (!tile) return;
+    const old = document.querySelector('#panelGrid [data-spotlight="1"]');
+    if (old && old !== tile) { old.style.gridColumn = ''; old.removeAttribute('data-spotlight'); }
+    if (tile.getAttribute('data-spotlight') === '1') {
+      tile.style.gridColumn = '';
+      tile.removeAttribute('data-spotlight');
+    } else {
+      tile.style.gridColumn = '1 / -1';
+      tile.setAttribute('data-spotlight', '1');
+    }
+  });
+
+  // ===== KONTWÒL ANIMATÈ — bouton mute/kamera/retire sou plas envite yo (sèlman sou onglè animatè a) =====
+  const mutedUids = new Set();
+  const videoOffUids = new Set();
+  function addHostControls() {
+    if (!isPanelHost) return;
+    document.querySelectorAll('#remoteVideos [id^="remote-"]').forEach(box => {
+      if (box.querySelector('.panel-ctrl')) return;
+      const uid = box.id.replace('remote-', '');
+      const bar = document.createElement('div');
+      bar.className = 'panel-ctrl';
+      bar.style.cssText = 'position:absolute; bottom:6px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:5;';
+      const mkBtn = (label, title, fn) => {
+        const b = document.createElement('button');
+        b.textContent = label; b.title = title;
+        b.style.cssText = 'background:rgba(0,0,0,0.65); color:#fff; border:1px solid #fff; border-radius:20px; width:34px; height:34px; font-size:16px; cursor:pointer;';
+        b.addEventListener('click', (ev) => { ev.stopPropagation(); fn(b); });
+        return b;
+      };
+      const muteBtn = mkBtn('🔇', 'Mute envite', async (b) => {
+        if (mutedUids.has(uid)) {
+          await sendPanelControl('UNMUTE', uid);
+          mutedUids.delete(uid);
+          b.textContent = '🔇';
+        } else {
+          await sendPanelControl('MUTE', uid);
+          mutedUids.add(uid);
+          b.textContent = '🔊';
+        }
+      });
+      const vidBtn = mkBtn('🚫🎥', 'Etelman kamera envite', async (b) => {
+        if (videoOffUids.has(uid)) {
+          await sendPanelControl('VIDON', uid);
+          videoOffUids.delete(uid);
+          b.textContent = '🚫🎥';
+        } else {
+          await sendPanelControl('VIDOFF', uid);
+          videoOffUids.add(uid);
+          b.textContent = '🎥';
+        }
+      });
+      vidBtn.style.width = '52px';
+      const remBtn = mkBtn('❌', 'Retire envite', async () => {
+        await sendPanelControl('REMOVE', uid);
+        box.remove();
+      });
+      bar.appendChild(muteBtn);
+      bar.appendChild(vidBtn);
+      bar.appendChild(remBtn);
+      box.style.position = 'relative';
+      box.appendChild(bar);
+    });
+  }
+  async function sendPanelControl(action, uid) {
+    if (!window._db) return;
+    const streamId = window._streamId || 1;
+    const me = window._me || { id: 1, username: 'Shelo' };
+    await window._db.from('messages').insert({ text: '[PANEL:' + action + ':' + uid + ']', stream_id: streamId, sender_id: me.id });
+  }
+  // ===== FOTO SOU PANEL LA — avatar lè kamera etenn oswa live vwa sèlman =====
+  window._panelAvatars = window._panelAvatars || {};
+  function tileAvatarOverlay(tile, url) {
+    if (!tile) return null;
+    tile.style.position = 'relative';
+    let ov = tile.querySelector('.tile-avatar');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.className = 'tile-avatar';
+      ov.style.cssText = 'position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:#111; z-index:5;';
+      tile.appendChild(ov);
+    }
+    ov.innerHTML = url
+      ? '<img src="' + url + '" alt="Foto" style="width:100%; height:100%; object-fit:cover;">'
+      : '<span style="font-size:64px;">👤</span>';
+    return ov;
+  }
+  function setTileAvatar(tile, url, show) {
+    if (!tile) return;
+    const ov = tileAvatarOverlay(tile, url);
+    if (ov) ov.style.display = show ? 'flex' : 'none';
+  }
+  function myAvatarUrl() {
+    const me = window._me;
+    return me && me.avatar_url ? me.avatar_url : null;
+  }
+  async function announceAvatar() {
+    try {
+      if (!window._db || !window._me || !agoraClient || agoraClient.uid === undefined || agoraClient.uid === null) return;
+      await window._db.from('messages').insert({ text: '[PANEL:AVATAR:' + agoraClient.uid + ']', stream_id: window._streamId || 1, sender_id: window._me.id });
+    } catch (e) { /* pa bloke live la si anons la echwe */ }
+  }
+  async function applyAvatarAnnouncement(uid, senderId) {
+    try {
+      if (!panelActive) return;
+      if (agoraClient && String(agoraClient.uid) === String(uid)) return;
+      let url = null;
+      if (window._db && senderId) {
+        const { data } = await window._db.from('profiles').select('avatar_url').eq('id', senderId).maybeSingle();
+        if (data) url = data.avatar_url || null;
+      }
+      window._panelAvatars[uid] = url;
+      const box = document.getElementById('remote-' + uid);
+      if (box) {
+        if (!box.querySelector('video')) setTileAvatar(box, url, true);
+      } else {
+        const rv = document.getElementById('remoteVideos');
+        if (rv) {
+          const nb = document.createElement('div');
+          nb.id = 'remote-' + uid;
+          nb.style.cssText = 'width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden;';
+          rv.appendChild(nb);
+          setTileAvatar(nb, url, true);
+        }
+      }
+    } catch (e) { /* inyore */ }
+  }
+  async function catchUpAvatars() {
+    try {
+      if (!window._db) return;
+      const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      const { data } = await window._db.from('messages').select('text, sender_id, created_at').gte('created_at', since).order('created_at', { ascending: true }).limit(50);
+      (data || []).forEach(m => {
+        const am = (m.text || '').match(/^\[PANEL:AVATAR:(\S+)\]/);
+        if (am) applyAvatarAnnouncement(am[1], m.sender_id);
+      });
+    } catch (e) { /* inyore */ }
+  }
+
+  async function handlePanelControl(text, senderId) {
+    const m = text.match(/^\[PANEL:(MUTE|UNMUTE|REMOVE|VIDOFF|VIDON|AVATAR):(\S+)\]/);
+    if (!m || !agoraClient) return;
+    const action = m[1], uid = m[2];
+    if (action === 'AVATAR') { await applyAvatarAnnouncement(uid, senderId); return; }
+    if (action === 'VIDOFF') {
+      const box = document.getElementById('remote-' + uid);
+      if (box) setTileAvatar(box, window._panelAvatars[uid] || null, true);
+    } else if (action === 'VIDON') {
+      const box = document.getElementById('remote-' + uid);
+      if (box) setTileAvatar(box, null, false);
+    }
+    if (String(agoraClient.uid) !== uid) return;
+    if (action === 'MUTE') {
+      if (localAudioTrack) await localAudioTrack.setEnabled(false);
+      liveStatus.innerHTML = '<span>🔇 Animatè a mute w. Ou pa ka pale pou kounye a.</span>';
+    } else if (action === 'UNMUTE') {
+      if (localAudioTrack) await localAudioTrack.setEnabled(true);
+      liveStatus.innerHTML = '<span>🔊 Animatè a retire mute la. Ou ka pale ankò.</span>';
+    } else if (action === 'VIDOFF') {
+      if (localVideoTrack) await localVideoTrack.setEnabled(false);
+      setTileAvatar(document.getElementById('localVideo'), myAvatarUrl(), true);
+      liveStatus.innerHTML = '<span>📹 Animatè a etenn kamera w. Vwa w kontinye pase.</span>';
+    } else if (action === 'VIDON') {
+      if (localVideoTrack) await localVideoTrack.setEnabled(true);
+      setTileAvatar(document.getElementById('localVideo'), null, false);
+      liveStatus.innerHTML = '<span>🎥 Animatè a limen kamera w tounen.</span>';
+    } else if (action === 'REMOVE') {
+      try {
+        if (localAudioTrack) { localAudioTrack.close(); localAudioTrack = null; }
+        if (localVideoTrack) { localVideoTrack.close(); localVideoTrack = null; }
+        await agoraClient.leave();
+        panelPublishing = false;
+        document.getElementById('localVideo').innerHTML = '';
+        document.getElementById('localVideo').style.display = 'none';
+        panelBtn.style.display = 'block';
+        renderPanelSeats();
+        liveStatus.innerHTML = '<span>❌ Animatè a retire w sou panel la. Ou tounen espektatè.</span>';
+        const token = document.getElementById('tokenInput').value.trim();
+        if (token) {
+          await agoraClient.setClientRole('audience');
+          await agoraClient.join(AGORA_APP_ID, AGORA_CHANNEL, token, null);
+        }
+      } catch (e) {
+        liveStatus.innerHTML = '<span class="err">❌ Erè: ' + e.message + '</span>';
+      }
+    }
+  }
+
+  async function startLive(audioOnly) {
+    const token = document.getElementById('tokenInput').value.trim();
+    if (!token) { liveStatus.innerHTML = '<span class="err">⚠️ Kole token tanporè a anvan w kòmanse.</span>'; return; }
+    if (!window.AgoraRTC) { liveStatus.innerHTML = '<span class="err">⚠️ Bibliyotèk Agora a pa chaje — verifye koneksyon entènèt la epi rafrechit paj la.</span>'; return; }
+    try {
+      liveStatus.textContent = '⏳ N ap konekte ak Agora…';
+      panelActive = true; panelPublishing = true; isPanelHost = true;
+      agoraClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
+
+      // Lè yon lòt moun antre nan menm live la, montre videyo l
+      agoraClient.on('user-published', async (user, mediaType) => {
+        await agoraClient.subscribe(user, mediaType);
+        if (mediaType === 'video') {
+          let box = document.getElementById('remote-' + user.uid);
+          if (!box) {
+            box = document.createElement('div');
+            box.id = 'remote-' + user.uid;
+            box.style.cssText = 'width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden;';
+            document.getElementById('remoteVideos').appendChild(box);
+          }
+          user.videoTrack.play(box); setTileAvatar(box, null, false);
+        }
+        if (mediaType === 'audio') { user.audioTrack.play(); }
+      });
+      agoraClient.on('user-left', (user) => {
+        const box = document.getElementById('remote-' + user.uid);
+        if (box) box.remove();
+      });
+
+      await agoraClient.setClientRole('host');
+      await agoraClient.join(AGORA_APP_ID, AGORA_CHANNEL, token, null);
+      localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      const tracks = [localAudioTrack];
+      if (!audioOnly) {
+        localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+        localVideoTrack.play('localVideo');
+        tracks.push(localVideoTrack);
+      }
+      await agoraClient.publish(tracks);
+      liveStatus.innerHTML = audioOnly
+        ? '<span class="ok">🎙 OU AN LIVE — VWA SÈLMAN! Pa gen kamera.</span>'
+        : '<span class="ok">🔴 OU AN LIVE! Videyo w ap pase sou SheRoosLive.</span>';
+      if (window._db && window._me) {
+        const title = document.getElementById('titleInput').value.trim() || ('Live ' + window._me.username);
+        const { data: row } = await window._db.from('streams').insert({ host_id: window._me.id, title: title, is_live: true }).select().single();
+        if (row) { currentStreamRowId = row.id; refreshStreams(); }
+      }
+      goLiveBtn.style.display = 'none';
+      audioLiveBtn.style.display = 'none';
+      watchBtn.style.display = 'none';
+      panelBtn.style.display = 'none';
+      leaveBtn.style.display = 'block';
+      renderPanelSeats();
+      await announceAvatar();
+      if (audioOnly) setTileAvatar(document.getElementById('localVideo'), myAvatarUrl(), true);
+    } catch (e) {
+      liveStatus.innerHTML = '<span class="err">❌ Erè Agora: ' + e.message + '</span>';
+    }
+  }
+
+  goLiveBtn.addEventListener('click', () => startLive(false));
+  audioLiveBtn.addEventListener('click', () => startLive(true));
+
+  // ===== MÒD ESPEKTATÈ — gade san kamera =====
+  async function watchLive() {
+    const token = document.getElementById('tokenInput').value.trim();
+    if (!token) { liveStatus.innerHTML = '<span class="err">⚠️ Kole token tanporè a anvan w gade.</span>'; return; }
+    if (!window.AgoraRTC) { liveStatus.innerHTML = '<span class="err">⚠️ Bibliyotèk Agora a pa chaje — verifye koneksyon entènèt la epi rafrechit paj la.</span>'; return; }
+    try {
+      liveStatus.textContent = '⏳ N ap konekte ak live la…';
+      panelActive = true; panelPublishing = false; isPanelHost = false;
+      agoraClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
+      agoraClient.on('user-published', async (user, mediaType) => {
+        await agoraClient.subscribe(user, mediaType);
+        if (mediaType === 'video') {
+          let box = document.getElementById('remote-' + user.uid);
+          if (!box) {
+            box = document.createElement('div');
+            box.id = 'remote-' + user.uid;
+            box.style.cssText = 'width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden;';
+            document.getElementById('remoteVideos').appendChild(box);
+          }
+          user.videoTrack.play(box); setTileAvatar(box, null, false);
+        }
+        if (mediaType === 'audio') { user.audioTrack.play(); }
+      });
+      agoraClient.on('user-left', (user) => {
+        const box = document.getElementById('remote-' + user.uid);
+        if (box) box.remove();
+      });
+      await agoraClient.setClientRole('audience');
+      await agoraClient.join(AGORA_APP_ID, AGORA_CHANNEL, token, null);
+      liveStatus.innerHTML = '<span class="ok">👀 W ap gade live la kòm espektatè. Ou pa bezwen kamera.</span>';
+      goLiveBtn.style.display = 'none';
+      audioLiveBtn.style.display = 'none';
+      watchBtn.style.display = 'none';
+      document.getElementById('localVideo').style.display = 'none';
+      panelBtn.style.display = 'block';
+      leaveBtn.style.display = 'block';
+      renderPanelSeats();
+      await catchUpAvatars();
+    } catch (e) {
+      liveStatus.innerHTML = '<span class="err">❌ Erè Agora: ' + e.message + '</span>';
+    }
+  }
+  watchBtn.addEventListener('click', watchLive);
+
+  // ===== MONTE SOU PANEL — espektatè vin envite videyo (san nouvo liy streams) =====
+  async function joinPanel() {
+    if (!agoraClient) { liveStatus.innerHTML = '<span class="err">⚠️ Antre nan live la kòm espektatè anvan w monte sou panel la.</span>'; return; }
+    const token = document.getElementById('tokenInput').value.trim();
+    try {
+      liveStatus.textContent = '⏳ N ap mete w sou panel la…';
+      try {
+        await agoraClient.setClientRole('host');
+      } catch (roleErr) {
+        // Si chanjman wòl dirèk pa mache: kite channel la epi antre ankò kòm host
+        await agoraClient.leave();
+        await agoraClient.setClientRole('host');
+        await agoraClient.join(AGORA_APP_ID, AGORA_CHANNEL, token, null);
+      }
+      localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+      localVideoTrack.play('localVideo');
+      await agoraClient.publish([localAudioTrack, localVideoTrack]);
+      panelPublishing = true;
+      document.getElementById('localVideo').style.display = 'block';
+      panelBtn.style.display = 'none';
+      renderPanelSeats();
+      liveStatus.innerHTML = '<span class="ok">🎛 OU SOU PANEL LA! Videyo w ap pase kounye a.</span>';
+      await announceAvatar();
+    } catch (e) {
+      liveStatus.innerHTML = '<span class="err">❌ Erè panel: ' + e.message + '</span>';
+    }
+  }
+  panelBtn.addEventListener('click', joinPanel);
+
+  leaveBtn.addEventListener('click', async () => {
+    try {
+      panelActive = false; panelPublishing = false; isPanelHost = false;
+      if (localAudioTrack) { localAudioTrack.close(); localAudioTrack = null; }
+      if (localVideoTrack) { localVideoTrack.close(); localVideoTrack = null; }
+      if (agoraClient) { await agoraClient.leave(); agoraClient = null; }
+      document.getElementById('localVideo').innerHTML = '';
+      document.getElementById('localVideo').style.display = 'block';
+      document.getElementById('localVideo').style.gridColumn = '';
+      document.getElementById('localVideo').removeAttribute('data-spotlight');
+      document.getElementById('remoteVideos').innerHTML = '';
+      if (window._db && currentStreamRowId) {
+        await window._db.from('streams').update({ is_live: false, ended_at: new Date().toISOString() }).eq('id', currentStreamRowId);
+        currentStreamRowId = null;
+        refreshStreams();
+      }
+      liveStatus.innerHTML = '⏹ Live la fèmen. Minit gratis yo sispann konte.';
+      goLiveBtn.style.display = 'block';
+      audioLiveBtn.style.display = 'block';
+      watchBtn.style.display = 'block';
+      panelBtn.style.display = 'none';
+      leaveBtn.style.display = 'none';
+    } catch (e) {
+      liveStatus.innerHTML = '<span class="err">❌ Erè: ' + e.message + '</span>';
+    }
+  });
+</script>
+</body>
+</html>
