@@ -288,6 +288,23 @@
       <button id="chatSend" style="background:#7b2ff7; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-weight:bold; cursor:pointer;">Voye</button>
     </div>
     <div id="chatStatus" style="margin-top:6px; font-size:13px;"></div>
+    <div style="margin-top:12px; border-top:1px solid #333; padding-top:10px;">
+      <button id="reportBtn" style="background:#991b1b; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:bold; cursor:pointer;">🚩 Signaler yon pwoblèm</button>
+      <div id="reportForm" style="display:none; margin-top:10px;">
+        <select id="reportReason" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+          <option value="mine">Kontni ki enplike yon minè</option>
+          <option value="seksyel">Kontni seksyèl ki pa apwopriye</option>
+          <option value="aselman">Asèlman / menas</option>
+          <option value="lot">Lòt pwoblèm</option>
+        </select>
+        <input id="reportDetail" type="text" placeholder="Detay (opsyonèl) — non itilizatè a, sa k pase..." style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px; box-sizing:border-box;">
+        <div style="display:flex; gap:8px;">
+          <button id="reportSend" style="background:#991b1b; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-weight:bold; cursor:pointer;">Voye signalman an</button>
+          <button id="reportCancel" style="background:#374151; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-weight:bold; cursor:pointer;">Anile</button>
+        </div>
+      </div>
+      <div id="reportStatus" style="margin-top:6px; font-size:13px;"></div>
+    </div>
   </div>
 </main>
 
@@ -1383,8 +1400,26 @@
       box.scrollTop = box.scrollHeight;
     }
 
+    // ===== SIGNALEMENT (rapò sekirite) — vizib pou animatè a sèlman =====
+    const isHost = !!(window._sessionUser && window._sessionUser.email === 'pierreshelo1@gmail.com');
+    const REPORT_LABELS = { mine: 'Kontni ki enplike yon minè', seksyel: 'Kontni seksyèl ki pa apwopriye', aselman: 'Asèlman / menas', lot: 'Lòt pwoblèm' };
+    function renderReport(m) {
+      const s = pmap[m.sender_id] || { username: 'Envite', avatar_url: null };
+      const inner = m.text.replace(/^\[SIGNALEMENT:/, '').replace(/\]$/, '');
+      const parts = inner.split(':');
+      const reason = REPORT_LABELS[parts[0]] || parts[0];
+      const detail = parts.slice(1).join(':');
+      const row = document.createElement('div');
+      row.style.cssText = 'background:#7f1d1d; color:#fff; border-radius:8px; padding:10px; font-size:13px;';
+      row.textContent = '🚩 SIGNALMAN — ' + s.username + ' : ' + reason + (detail ? ' — ' + detail : '');
+      box.appendChild(row);
+      box.scrollTop = box.scrollHeight;
+    }
+
     const { data: msgs } = await db.from('messages').select('*').order('created_at', { ascending: false }).limit(50);
-    (msgs || []).filter(m => m.text.indexOf('[PANEL:') !== 0).reverse().forEach(renderMsg);
+    (msgs || []).filter(m => m.text.indexOf('[PANEL:') !== 0 && (isHost || m.text.indexOf('[SIGNALEMENT:') !== 0)).reverse().forEach(m => {
+      if (m.text.indexOf('[SIGNALEMENT:') === 0) { renderReport(m); } else { renderMsg(m); }
+    });
     (msgs || []).slice().reverse().forEach(m => {
       noteScrambleMsg(m.text);
       if (m.text.indexOf('🎯 QUIZ!') === 0) { const fm = m.text.match(/Antre: (\d+) coins/); if (fm) window._quizFee = parseInt(fm[1], 10); window._quizLive = true; window._quizJoined = false; }
@@ -1397,6 +1432,7 @@
           let msgLvl = null;
           { const lm = payload.new.text.match(/ \[NIVO:(\d+)\]\s*$/); if (lm) { msgLvl = parseInt(lm[1], 10); payload.new.text = payload.new.text.slice(0, lm.index); } }
           if (payload.new.text.indexOf('[PANEL:') === 0) { handlePanelControl(payload.new.text, payload.new.sender_id); return; }
+          if (payload.new.text.indexOf('[SIGNALEMENT:') === 0) { if (isHost) renderReport(payload.new); return; }
           if (payload.new.text.indexOf('[QUIZ:ANTRE:') === 0) {
             if (window._quiz) { const f = parseInt(payload.new.text.replace(/[^0-9]/g, ''), 10) || 0; window._quiz.pot += f; window._quiz.entrants[payload.new.sender_id] = (window._quiz.entrants[payload.new.sender_id] || 0) + f; }
             return;
@@ -1541,6 +1577,30 @@
     }
     document.getElementById('chatSend').addEventListener('click', send);
     input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+    // ===== SIGNALEMENT (rapò sekirite) — bouton + fòm =====
+    const reportBtn = document.getElementById('reportBtn');
+    const reportForm = document.getElementById('reportForm');
+    const reportReason = document.getElementById('reportReason');
+    const reportDetail = document.getElementById('reportDetail');
+    const reportStatus = document.getElementById('reportStatus');
+    if (reportBtn) {
+      reportBtn.addEventListener('click', () => {
+        if (!window._sessionUser) { reportStatus.innerHTML = '<span class="err">❌ Konekte anvan ou siynale yon pwoblèm.</span>'; return; }
+        reportForm.style.display = reportForm.style.display === 'none' ? 'block' : 'none';
+        reportStatus.textContent = '';
+      });
+      document.getElementById('reportCancel').addEventListener('click', () => { reportForm.style.display = 'none'; reportDetail.value = ''; reportStatus.textContent = ''; });
+      document.getElementById('reportSend').addEventListener('click', async () => {
+        if (!window._sessionUser) { reportStatus.innerHTML = '<span class="err">❌ Konekte anvan ou siynale yon pwoblèm.</span>'; return; }
+        const reason = reportReason.value;
+        const detail = (reportDetail.value || '').trim().replace(/[\n\r]/g, ' ');
+        const { error } = await db.from('messages').insert({ text: '[SIGNALEMENT:' + reason + ':' + detail + ']', stream_id: streamId, sender_id: me.id });
+        if (error) { reportStatus.innerHTML = '<span class="err">❌ Signalman an pa ale : ' + error.message + '</span>'; return; }
+        reportForm.style.display = 'none'; reportDetail.value = '';
+        reportStatus.innerHTML = '<span class="ok">✅ Signalman ou a voye. Ekip SheRoosLive la ap egzamine l.</span>';
+      });
+    }
   }
 
   start();
