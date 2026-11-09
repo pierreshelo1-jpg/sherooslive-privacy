@@ -1861,13 +1861,42 @@
   let currentStreamRowId = null;
 
   // ===== PAJ AKÈY — lis live yo (kat yo klike pou antre nan chanm live la) =====
-  function renderStreamsList(streams) {
+  // Avatar animatè a sou chak kat (stil Poppo/TikTok): foto pwofil la soti nan
+  // profiles.avatar_url (lyen via streams.host_id); si pa gen foto, sèk 👤 la.
+  function escAttr(v) { return String(v == null ? '' : v).replace(/"/g, '&quot;'); }
+  function escHtml(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function hostAvatarHtml(p, size) {
+    const sz = size || 44;
+    const fs = Math.round(sz * 0.45);
+    const circle = 'width:' + sz + 'px; height:' + sz + 'px; border-radius:50%; flex-shrink:0;';
+    const fallback = '<div style="display:flex; ' + circle + ' background:#7b2ff7; align-items:center; justify-content:center; font-size:' + fs + 'px;">👤</div>';
+    if (p && p.avatar_url) {
+      // Si imaj la pa chaje (lyen kase), onerror la kache l epi montre sèk 👤 la.
+      return '<img src="' + escAttr(p.avatar_url) + '" alt="Foto ' + escAttr(p.username || 'animatè') + '" style="' + circle + ' object-fit:cover;" onerror="this.style.display=\'none\';var f=this.nextElementSibling;if(f)f.style.display=\'flex\';">' +
+        '<div style="display:none; ' + circle + ' background:#7b2ff7; align-items:center; justify-content:center; font-size:' + fs + 'px;">👤</div>';
+    }
+    return fallback;
+  }
+  async function renderStreamsList(streams) {
     const sEl = document.getElementById('streams');
     if (!sEl) return;
     if (streams && streams.length) {
-      sEl.innerHTML = streams.map(s =>
-        '<div class="card stream-card" data-live="' + (s.is_live ? '1' : '0') + '" data-title="' + String(s.title || '').replace(/"/g, '&quot;') + '">' + (s.is_live ? '<span class="live-badge">LIVE</span>' : '<span class="off-badge">FINI</span>') +
-        ' <strong>' + s.title + '</strong>' + (s.is_live ? ' <span style="float:right;">▶️ Antre</span>' : '') + '</div>').join('');
+      let hostsById = {};
+      try {
+        const ids = Array.from(new Set(streams.map(function (s) { return s.host_id; }).filter(function (id) { return id != null; })));
+        if (ids.length && window._db) {
+          const res = await window._db.from('profiles').select('id, username, avatar_url').in('id', ids);
+          (res.data || []).forEach(function (p) { hostsById[p.id] = p; });
+        }
+      } catch (e) {}
+      sEl.innerHTML = streams.map(function (s) {
+        const host = hostsById[s.host_id] || null;
+        const hostName = host && host.username ? host.username : '';
+        return '<div class="card stream-card" data-live="' + (s.is_live ? '1' : '0') + '" data-title="' + escAttr(s.title) + '">' + (s.is_live ? '<span class="live-badge">LIVE</span>' : '<span class="off-badge">FINI</span>') +
+          '<div style="display:flex; gap:10px; align-items:center; margin-top:8px;">' + hostAvatarHtml(host, 44) +
+          '<div style="flex:1; min-width:0;"><strong>' + escHtml(s.title) + '</strong>' + (hostName ? '<br><span style="font-size:13px; color:#9ca3af;">' + escHtml(hostName) + '</span>' : '') + '</div>' +
+          (s.is_live ? '<span style="flex-shrink:0;">▶️ Antre</span>' : '') + '</div></div>';
+      }).join('');
       sEl.querySelectorAll('.stream-card[data-live="1"]').forEach(el => {
         el.addEventListener('click', () => enterLiveRoom(el.getAttribute('data-title') || 'SheRoosLive'));
       });
