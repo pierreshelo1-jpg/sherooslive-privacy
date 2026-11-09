@@ -8,8 +8,8 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: Arial, sans-serif; background: #0f0a1e; color: #fff; min-height: 100vh; }
   header { background: linear-gradient(90deg, #7b2ff7, #f107a3); padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; }
-  header h1 { font-size: 24px; }
-  header .coins { background: rgba(0,0,0,.35); padding: 6px 14px; border-radius: 20px; font-weight: bold; }
+  header h1 { font-size: 20px; white-space: nowrap; }
+  header .coins { background: rgba(0,0,0,.35); padding: 6px 14px; border-radius: 20px; font-weight: bold; white-space: nowrap; }
   main { padding: 16px; max-width: 700px; margin: 0 auto; }
   h2 { margin: 22px 0 10px; font-size: 18px; }
   .card { background: #1d1433; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
@@ -20,9 +20,35 @@
   #status { background: #2a1e4d; border-radius: 10px; padding: 12px; margin-top: 14px; font-size: 14px; }
   .err { color: #ff7b7b; }
   .ok { color: #7bffb2; }
+  /* ===== DE PAJ: AKÈY ↔ LIVE (chanm live TikTok/Poppo) ===== */
+  #homeView { display: block; }
+  #liveView { display: none; position: fixed; inset: 0; z-index: 200; background: #050510; flex-direction: column; height: 100dvh; overflow: hidden; }
+  body.in-live #liveView { display: flex; }
+  .live-topbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #12081f; border-bottom: 1px solid #2a1e4d; }
+  .live-topbar .room-title { flex: 1; font-weight: bold; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .live-topbar button { background: #2a1e4d; color: #fff; border: none; padding: 8px 12px; border-radius: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+  .live-topbar #leaveBtn { background: #991b1b; }
+  .live-topbar #reportBtn { background: #991b1b; }
+  #liveStage { flex: 1; position: relative; min-height: 0; overflow: hidden; background: #000; }
+  #liveStatus { position: absolute; top: 8px; left: 10px; right: 10px; z-index: 11; font-size: 13px; text-shadow: 0 1px 3px #000; pointer-events: none; }
+  #panelGrid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; align-content: start; overflow-y: auto; }
+  #chatOverlay { position: absolute; left: 0; right: 0; bottom: 0; max-height: 55%; display: flex; flex-direction: column; justify-content: flex-end; padding: 10px; background: linear-gradient(transparent, rgba(0,0,0,.85)); z-index: 5; }
+  #chatOverlay #chatBox > div { background: rgba(0,0,0,.45); border-radius: 10px; padding: 6px 8px; }
+  #chatOverlay .chat-bar { display: flex; gap: 8px; margin-top: 8px; }
+  #liveSetup { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 34px 16px 16px; background: rgba(5,5,16,.9); overflow-y: auto; }
+  #liveSetup .card { width: 100%; max-width: 420px; margin: auto; }
+  .live-actions { flex: none; display: flex; gap: 8px; padding: 10px; overflow-x: auto; background: #12081f; border-top: 1px solid #2a1e4d; }
+  .live-actions button { flex: none; background: #2a1e4d; color: #fff; border: none; padding: 10px 14px; border-radius: 20px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+  .live-actions button.gift-btn { background: #e0245e; }
+  #liveSheets { flex: none; max-height: 46%; overflow-y: auto; background: #1d1433; border-top: 1px solid #2a1e4d; display: none; }
+  .live-sheet { display: none; padding: 12px; }
+  .live-sheet .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .live-sheet .sheet-head button { background: #374151; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+  .stream-card { cursor: pointer; }
 </style>
 </head>
 <body>
+<div id="homeView">
 <header>
   <h1>🎥 SheRoosLive</h1>
   <div class="coins">🪙 <span id="coinCount">…</span> ⭐ <span id="pointsCount">…</span></div>
@@ -32,6 +58,27 @@
 
   <h2>🔴 Live kounye a</h2>
   <div id="streams"></div>
+  <button id="enterLiveBtn" style="background:#e0245e; color:#fff; border:none; padding:14px 20px; border-radius:12px; font-size:17px; font-weight:bold; cursor:pointer; width:100%;">📹 Antre nan Chanm Live la</button>
+
+  <h2>🎮 Jwèt</h2>
+  <p style="font-size:14px; color:#9ca3af; margin-bottom:10px;">Peze yon jwèt pou louvri l nan chanm live la — ou ka jwe pandan w ap gade live la.</p>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+    <div class="card game-tile" data-game="quiz" style="cursor:pointer; text-align:center; margin-bottom:0;">
+      <div style="font-size:32px;">🎯</div><strong>Quiz Live</strong><br><span style="font-size:13px; color:#9ca3af;">Reponn kesyon, genyen po a</span>
+    </div>
+    <div class="card game-tile" data-game="pk" style="cursor:pointer; text-align:center; margin-bottom:0;">
+      <div style="font-size:32px;">⚔️</div><strong>PK Battle</strong><br><span style="font-size:13px; color:#9ca3af;">Ble vs Wouj — Fwa ak gan</span>
+    </div>
+    <div class="card game-tile" data-game="wheel" style="cursor:pointer; text-align:center; margin-bottom:0;">
+      <div style="font-size:32px;">🎡</div><strong>Wou Chans</strong><br><span style="font-size:13px; color:#9ca3af;">Vire wou a, genyen pwen</span>
+    </div>
+    <div class="card game-tile" data-game="scramble" style="cursor:pointer; text-align:center; margin-bottom:0;">
+      <div style="font-size:32px;">🔤</div><strong>Mo Andezòd</strong><br><span style="font-size:13px; color:#9ca3af;">Ranje lèt yo, ranmase po a</span>
+    </div>
+    <div class="card game-tile" data-game="jackpot" style="cursor:pointer; text-align:center; margin-bottom:0;">
+      <div style="font-size:32px;">🎰</div><strong>Jackpot Ayiti</strong><br><span style="font-size:13px; color:#9ca3af;">3 imaj parey = BIG WIN</span>
+    </div>
+  </div>
 
   <h2>👤 Pwofil mwen</h2>
   <div id="profile"></div>
@@ -117,10 +164,6 @@
     </div>
   </div>
 
-  <h2>🎁 Kado</h2>
-  <div id="gifts"></div>
-  <div id="giftStatus" style="font-size:14px; margin-top:4px;">👆 Klike yon kado pou w voye l nan live la</div>
-
   <div id="receivedSection" style="display:none;">
     <h2>🎁 Kado m resevwa</h2>
     <div class="card">
@@ -129,84 +172,8 @@
     </div>
   </div>
 
-  <h2>🎯 Quiz Live</h2>
-  <div class="card">
-    <input id="quizQuestion" type="text" placeholder="Kesyon an (egz: Ki ane Ayiti te pran endepandans?)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
-    <input id="quizAnswer" type="text" placeholder="Bon repons lan (kache — sèl ou wè l)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
-    <input id="quizFee" type="number" value="10" min="0" placeholder="Pri antre (coins)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
-    <button id="quizStartBtn" style="background:#f59e0b; color:#000; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🎯 Kòmanse Quiz</button>
-    <button id="quizStopBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">⏹ Kanpe Quiz la</button>
-    <button id="quizJoinBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">🎟️ Antre nan Quiz la</button>
-    <div id="quizStatus" style="margin-top:10px; font-size:14px;">👆 Animatè a ekri kesyon an. Peze Antre anvan w reponn — antre a dedwi nan Coins ou, gayan an pran 70% po a an Pwen!</div>
-  </div>
-
-  <h2>⚔️ PK Battle</h2>
-  <div class="card">
-    <select id="pkMode" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
-      <option value="2">⚔️ PK 2 jwè (Ble vs Wouj)</option>
-      <option value="4">⚔️ PK 4 jwè (Ble vs Wouj vs Vèt vs Jòn)</option>
-    </select>
-    <input id="pkOpp" type="text" placeholder="Non advèsè 1 (Wouj) (egz: Jeff)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
-    <div id="pkOppExtra" style="display:none;">
-      <input id="pkOppVet" type="text" placeholder="Non advèsè 2 (Vèt)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
-      <input id="pkOppJon" type="text" placeholder="Non advèsè 3 (Jòn)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
-    </div>
-    <input id="pkMinutes" type="number" value="3" min="1" placeholder="Dire (minit)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
-    <button id="pkStartBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">⚔️ Kòmanse PK</button>
-    <button id="pkStopBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">⏹ Kanpe PK a</button>
-    <div style="display:flex; gap:8px; margin-top:10px;">
-      <button id="pkSideBleBtn" style="flex:1; background:#2563eb; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟦 Kan Ble</button>
-      <button id="pkSideWoujBtn" style="flex:1; background:#dc2626; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟥 Kan Wouj</button>
-    </div>
-    <div id="pkSideRow2" style="display:none; gap:8px; margin-top:8px;">
-      <button id="pkSideVetBtn" style="flex:1; background:#0e9f6e; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟩 Kan Vèt</button>
-      <button id="pkSideJonBtn" style="flex:1; background:#f59e0b; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟨 Kan Jòn</button>
-    </div>
-    <div style="display:flex; gap:8px; margin-top:10px;">
-      <button id="pkGloveBtn" style="flex:1; background:#0891b2; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🥊 Mete gan (×5, 30s)</button>
-    </div>
-    <div id="pkBoard" style="margin-top:12px; display:none;">
-      <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Kan yo</span><span id="pkTimer">--:--</span></div>
-      <div id="pkRows" style="margin-top:6px;"></div>
-      <div id="pkFx" style="margin-top:6px; font-size:14px;"></div>
-    </div>
-    <div id="pkStatus" style="margin-top:10px; font-size:14px;">👆 Animatè a kòmanse PK a, espektatè yo chwazi kan yo, epi kado yo konte kòm pwen. Depi PK a lanse, chak kan jwenn FWA 3 ki aktive pou kont li (×3, 30s), san klike. Lè FWA 3 fini (30s), apre yon ti tan (15s) yon bonis FWA 2 oswa 3 parèt otomatik kòm objektif — kan an dwe rive 300 pwen nan 30 segonn pou debloke l, sinon li pèdi l; lè li debloke, li aktive pou kont li tou (30s). Apre chak bonis fini, yon lòt parèt menm jan an. Gan an rete manyèl: fòk ou klike sou bouton gan an. 10 dènye segonn PK a = moman snip.</div>
-    <div id="pkVet" style="margin-top:6px; font-size:14px;"></div>
-  </div>
-
-  <h2>🎡 Wou Chans</h2>
-  <div class="card" style="text-align:center;">
-    <div style="position:relative; width:260px; height:260px; margin:0 auto;">
-      <div id="wheel" style="width:260px; height:260px; border-radius:50%; background:conic-gradient(#e0245e 0deg 45deg, #f59e0b 45deg 90deg, #0e9f6e 90deg 135deg, #2563eb 135deg 180deg, #7b2ff7 180deg 225deg, #dc2626 225deg 270deg, #0891b2 270deg 315deg, #65a30d 315deg 360deg); position:relative; overflow:hidden;">
-        <span style="position:absolute; left:50%; top:50%; transform:rotate(22.5deg) translateY(-98px) rotate(-22.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🎁</span>
-        <span style="position:absolute; left:50%; top:50%; transform:rotate(67.5deg) translateY(-98px) rotate(-67.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🇭🇹</span>
-        <span style="position:absolute; left:50%; top:50%; transform:rotate(112.5deg) translateY(-98px) rotate(-112.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">👑</span>
-        <span style="position:absolute; left:50%; top:50%; transform:rotate(157.5deg) translateY(-98px) rotate(-157.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🌟</span>
-        <span style="position:absolute; left:50%; top:50%; transform:rotate(202.5deg) translateY(-98px) rotate(-202.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🎉</span>
-        <span style="position:absolute; left:50%; top:50%; transform:rotate(247.5deg) translateY(-98px) rotate(-247.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">😢</span>
-        <span style="position:absolute; left:50%; top:50%; transform:rotate(292.5deg) translateY(-98px) rotate(-292.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">💨</span>
-        <span style="position:absolute; left:50%; top:50%; transform:rotate(337.5deg) translateY(-98px) rotate(-337.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🔄</span>
-      </div>
-      <div style="position:absolute; top:-6px; left:50%; transform:translateX(-50%); font-size:32px;">▼</div>
-    </div>
-    <input id="spinPrice" type="number" value="10" min="0" placeholder="Pri vire a (coins)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-top:14px; margin-bottom:8px;">
-    <button id="spinBtn" style="background:#f59e0b; color:#000; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🎡 Vire Wou a</button>
-    <div id="spinStatus" style="margin-top:10px; font-size:14px;">👆 Vire wou a — mize a dedwi nan Coins ou, genyen an antre nan Pwen Jwèt ou (20,000 pwen = $1). Ou ka jwe menm si ou pa nan live!</div>
-    <div style="margin-top:8px; font-size:13px;">🎁 Bwat ×0.1 • 🇭🇹 Drapo ×3 • 👑 Kouwòn ×0.3 • 🌟 Lejand ×1 • 🎉 Konfeti ×0.05 • 😢 Pèdi 0 • 💨 Zewo 0 • 🔄 Ankò gratis</div>
-  </div>
-
-  <h2>🔤 Mo Andezòd</h2>
-  <div class="card">
-    <input id="scrWord" type="text" placeholder="Mo a (egz: AYITI)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
-    <input id="scrPenalty" type="number" value="5" min="0" placeholder="Pwen pèdi pa move repons" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
-    <button id="scrStartBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🔤 Melanje epi Kòmanse</button>
-    <button id="scrStopBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">⏹ Kanpe Mo a</button>
-    <button id="scrAutoBtn" style="background:#2563eb; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">▶️ Mòd Otomatik</button>
-    <div id="scrStatus" style="margin-top:10px; font-size:14px;">👆 Animatè a ekri yon mo, app la melanje lèt yo, espektatè yo ranje yo nan chat la. Chak devine ak miz dedwi nan Coins ou; gayan an pran 70% po a an Pwen!</div>
-  </div>
-
   <h2>💰 Rechaje & Bonis</h2>
-  <div class="card">
+  <div class="card" id="rechargeCard">
     <p>💰 <b>To a :</b> $1 = 10,000 coins — plis ke Poppo! ($20 = 200,000 coins)</p>
     <p>🎁 <b>Premye rechaje :</b> +30% coins gratis! ($20 → 260,000 coins)</p>
     <p>👑 <b>VIP :</b> rechaje $20 oswa plis → badge VIP + kado eksklizif</p>
@@ -249,48 +216,157 @@
     <div id="wdPtsStatus" style="margin-top:10px; font-size:14px;"></div>
   </div>
 
-  <h2>🎰 Jackpot Ayiti</h2>
-  <div class="card" style="text-align:center;">
-    <div style="display:flex; justify-content:center; gap:10px; font-size:64px;">
-      <span id="reel1" style="background:#222; border-radius:12px; padding:10px 16px;">🇭🇹</span>
-      <span id="reel2" style="background:#222; border-radius:12px; padding:10px 16px;">🇭🇹</span>
-      <span id="reel3" style="background:#222; border-radius:12px; padding:10px 16px;">🇭🇹</span>
-    </div>
-    <input id="jackPrice" type="number" value="10" min="0" placeholder="Pri vire a (coins)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-top:14px; margin-bottom:8px;">
-    <button id="jackBtn" style="background:#dc2626; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🎰 Vire Jackpot la</button>
-    <div id="jackStatus" style="margin-top:10px; font-size:14px;">👆 3 imaj parey = 🎰 BIG WIN! Mize a dedwi nan Coins ou, genyen an antre nan Pwen Jwèt ou. Ou ka jwe menm si ou pa nan live!</div>
-    <div style="margin-top:8px; font-size:13px;">3×🇭🇹 = miz ×20 • 3×lòt = miz ×5 • 2 parey = miz ×0.5 • Sinon = pèdi</div>
-  </div>
+</main>
+</div><!-- /homeView -->
 
-  <h2>📹 Videyo Live</h2>
-  <div class="card">
-    <input id="titleInput" type="text" placeholder="Tit live la (egz: Bonswa tout moun)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
-    <input id="tokenInput" type="text" placeholder="Kole token tanporè Agora a isit la" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
-    <button id="goLiveBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🔴 Kòmanse Live</button>
-    <button id="audioLiveBtn" style="background:#4a3aff; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">🎙 Live ak Vwa Sèlman</button>
-    <button id="watchBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">👀 Gade Live la (Espektatè)</button>
-    <button id="panelBtn" style="background:#7b2ff7; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px; display:none;">⬆️ Monte sou panel</button>
-    <button id="leaveBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px; display:none;">⏹ Kite Live la</button>
-    <div id="liveStatus" style="margin-top:10px; font-size:14px;"></div>
-    <h3 style="margin-top:14px; font-size:15px;">🎛 Panel Live la (9 plas)</h3>
-    <div id="panelGrid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-top:10px;">
+<!-- ===== PAJ LIVE — chanm live plen ekran (TikTok / Poppo) ===== -->
+<div id="liveView">
+  <div class="live-topbar">
+    <button id="liveBackBtn">← Retou</button>
+    <div class="room-title">🔴 LIVE · <span id="liveRoomTitle">SheRoosLive</span></div>
+    <div style="font-weight:bold; white-space:nowrap;">🪙 <span id="liveCoinCount">…</span></div>
+    <button id="reportBtn">🚩 Signaler</button>
+    <button id="leaveBtn" style="display:none;">⏹ Kite</button>
+  </div>
+  <div id="liveStage">
+    <div id="liveStatus"></div>
+    <div id="panelGrid">
       <div id="localVideo" style="aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden;"></div>
       <div id="remoteVideos" style="display:contents;"></div>
     </div>
-    <p style="font-size:13px; color:#9ca3af; margin-top:8px;">👆 Klike sou yon videyo pou wè l gran, klike ankò pou retounen nan griy la.</p>
-  </div>
-
-  <h2>💬 Chat Live la</h2>
-  <div class="card">
-    <div id="chatBox" style="max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:10px;"></div>
-    <div style="display:flex; gap:8px; margin-top:12px;">
-      <input id="chatInput" type="text" placeholder="Ekri yon mesaj..." style="flex:1; padding:10px; border-radius:8px; border:none;">
-      <button id="chatSend" style="background:#7b2ff7; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-weight:bold; cursor:pointer;">Voye</button>
+    <div id="chatOverlay">
+      <div id="chatBox" style="max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
+      <div class="chat-bar">
+        <input id="chatInput" type="text" placeholder="Ekri yon mesaj..." style="flex:1; padding:10px; border-radius:8px; border:none;">
+        <button id="chatSend" style="background:#7b2ff7; color:#fff; border:none; padding:10px 18px; border-radius:8px; font-weight:bold; cursor:pointer;">Voye</button>
+      </div>
+      <div id="chatStatus" style="margin-top:6px; font-size:13px;"></div>
     </div>
-    <div id="chatStatus" style="margin-top:6px; font-size:13px;"></div>
-    <div style="margin-top:12px; border-top:1px solid #333; padding-top:10px;">
-      <button id="reportBtn" style="background:#991b1b; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:bold; cursor:pointer;">🚩 Signaler yon pwoblèm</button>
-      <div id="reportForm" style="display:none; margin-top:10px;">
+    <div id="liveSetup">
+      <div class="card">
+        <h3 style="margin-bottom:10px;">📹 Live</h3>
+        <input id="titleInput" type="text" placeholder="Tit live la (egz: Bonswa tout moun)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
+        <input id="tokenInput" type="text" placeholder="Kole token tanporè Agora a isit la" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
+        <button id="goLiveBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🔴 Kòmanse Live</button>
+        <button id="audioLiveBtn" style="background:#4a3aff; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">🎙 Live ak Vwa Sèlman</button>
+        <button id="watchBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">👀 Gade Live la (Espektatè)</button>
+        <p style="font-size:13px; color:#9ca3af; margin-top:10px;">👆 Klike sou yon videyo pou wè l gran, klike ankò pou retounen nan griy la.</p>
+      </div>
+    </div>
+  </div>
+  <div class="live-actions">
+    <button id="panelBtn" style="display:none; background:#7b2ff7;">⬆️ Monte sou panel</button>
+    <button class="gift-btn" data-sheet="gifts">🎁 Kado</button>
+    <button data-sheet="quiz">🎯 Quiz</button>
+    <button data-sheet="pk">⚔️ PK</button>
+    <button data-sheet="wheel">🎡 Wou</button>
+    <button data-sheet="scramble">🔤 Mo</button>
+    <button data-sheet="jackpot">🎰 Jackpot</button>
+    <button id="liveRechargeBtn" style="background:#0e9f6e;">💰 Rechaje</button>
+  </div>
+  <div id="liveSheets">
+    <div id="sheet-gifts" class="live-sheet">
+      <div class="sheet-head"><strong>🎁 Kado</strong><button class="sheet-close">✕ Fèmen</button></div>
+      <div id="gifts"></div>
+      <div id="giftStatus" style="font-size:14px; margin-top:4px;">👆 Klike yon kado pou w voye l nan live la</div>
+    </div>
+    <div id="sheet-quiz" class="live-sheet">
+      <div class="sheet-head"><strong>🎯 Quiz Live</strong><button class="sheet-close">✕ Fèmen</button></div>
+      <div class="card">
+        <input id="quizQuestion" type="text" placeholder="Kesyon an (egz: Ki ane Ayiti te pran endepandans?)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+        <input id="quizAnswer" type="text" placeholder="Bon repons lan (kache — sèl ou wè l)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+        <input id="quizFee" type="number" value="10" min="0" placeholder="Pri antre (coins)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+        <button id="quizStartBtn" style="background:#f59e0b; color:#000; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🎯 Kòmanse Quiz</button>
+        <button id="quizStopBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">⏹ Kanpe Quiz la</button>
+        <button id="quizJoinBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">🎟️ Antre nan Quiz la</button>
+        <div id="quizStatus" style="margin-top:10px; font-size:14px;">👆 Animatè a ekri kesyon an. Peze Antre anvan w reponn — antre a dedwi nan Coins ou, gayan an pran 70% po a an Pwen!</div>
+      </div>
+    </div>
+    <div id="sheet-pk" class="live-sheet">
+      <div class="sheet-head"><strong>⚔️ PK Battle</strong><button class="sheet-close">✕ Fèmen</button></div>
+      <div class="card">
+        <select id="pkMode" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+          <option value="2">⚔️ PK 2 jwè (Ble vs Wouj)</option>
+          <option value="4">⚔️ PK 4 jwè (Ble vs Wouj vs Vèt vs Jòn)</option>
+        </select>
+        <input id="pkOpp" type="text" placeholder="Non advèsè 1 (Wouj) (egz: Jeff)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+        <div id="pkOppExtra" style="display:none;">
+          <input id="pkOppVet" type="text" placeholder="Non advèsè 2 (Vèt)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+          <input id="pkOppJon" type="text" placeholder="Non advèsè 3 (Jòn)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+        </div>
+        <input id="pkMinutes" type="number" value="3" min="1" placeholder="Dire (minit)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+        <button id="pkStartBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">⚔️ Kòmanse PK</button>
+        <button id="pkStopBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">⏹ Kanpe PK a</button>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button id="pkSideBleBtn" style="flex:1; background:#2563eb; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟦 Kan Ble</button>
+          <button id="pkSideWoujBtn" style="flex:1; background:#dc2626; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟥 Kan Wouj</button>
+        </div>
+        <div id="pkSideRow2" style="display:none; gap:8px; margin-top:8px;">
+          <button id="pkSideVetBtn" style="flex:1; background:#0e9f6e; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟩 Kan Vèt</button>
+          <button id="pkSideJonBtn" style="flex:1; background:#f59e0b; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🟨 Kan Jòn</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button id="pkGloveBtn" style="flex:1; background:#0891b2; color:#fff; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🥊 Mete gan (×5, 30s)</button>
+        </div>
+        <div id="pkBoard" style="margin-top:12px; display:none;">
+          <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Kan yo</span><span id="pkTimer">--:--</span></div>
+          <div id="pkRows" style="margin-top:6px;"></div>
+          <div id="pkFx" style="margin-top:6px; font-size:14px;"></div>
+        </div>
+        <div id="pkStatus" style="margin-top:10px; font-size:14px;">👆 Animatè a kòmanse PK a, espektatè yo chwazi kan yo, epi kado yo konte kòm pwen. Depi PK a lanse, chak kan jwenn FWA 3 ki aktive pou kont li (×3, 30s), san klike. Lè FWA 3 fini (30s), apre yon ti tan (15s) yon bonis FWA 2 oswa 3 parèt otomatik kòm objektif — kan an dwe rive 300 pwen nan 30 segonn pou debloke l, sinon li pèdi l; lè li debloke, li aktive pou kont li tou (30s). Apre chak bonis fini, yon lòt parèt menm jan an. Gan an rete manyèl: fòk ou klike sou bouton gan an. 10 dènye segonn PK a = moman snip.</div>
+        <div id="pkVet" style="margin-top:6px; font-size:14px;"></div>
+      </div>
+    </div>
+    <div id="sheet-wheel" class="live-sheet">
+      <div class="sheet-head"><strong>🎡 Wou Chans</strong><button class="sheet-close">✕ Fèmen</button></div>
+      <div class="card" style="text-align:center;">
+        <div style="position:relative; width:260px; height:260px; margin:0 auto;">
+          <div id="wheel" style="width:260px; height:260px; border-radius:50%; background:conic-gradient(#e0245e 0deg 45deg, #f59e0b 45deg 90deg, #0e9f6e 90deg 135deg, #2563eb 135deg 180deg, #7b2ff7 180deg 225deg, #dc2626 225deg 270deg, #0891b2 270deg 315deg, #65a30d 315deg 360deg); position:relative; overflow:hidden;">
+            <span style="position:absolute; left:50%; top:50%; transform:rotate(22.5deg) translateY(-98px) rotate(-22.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🎁</span>
+            <span style="position:absolute; left:50%; top:50%; transform:rotate(67.5deg) translateY(-98px) rotate(-67.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🇭🇹</span>
+            <span style="position:absolute; left:50%; top:50%; transform:rotate(112.5deg) translateY(-98px) rotate(-112.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">👑</span>
+            <span style="position:absolute; left:50%; top:50%; transform:rotate(157.5deg) translateY(-98px) rotate(-157.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🌟</span>
+            <span style="position:absolute; left:50%; top:50%; transform:rotate(202.5deg) translateY(-98px) rotate(-202.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🎉</span>
+            <span style="position:absolute; left:50%; top:50%; transform:rotate(247.5deg) translateY(-98px) rotate(-247.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">😢</span>
+            <span style="position:absolute; left:50%; top:50%; transform:rotate(292.5deg) translateY(-98px) rotate(-292.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">💨</span>
+            <span style="position:absolute; left:50%; top:50%; transform:rotate(337.5deg) translateY(-98px) rotate(-337.5deg); font-size:28px; margin-left:-14px; margin-top:-14px;">🔄</span>
+          </div>
+          <div style="position:absolute; top:-6px; left:50%; transform:translateX(-50%); font-size:32px;">▼</div>
+        </div>
+        <input id="spinPrice" type="number" value="10" min="0" placeholder="Pri vire a (coins)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-top:14px; margin-bottom:8px;">
+        <button id="spinBtn" style="background:#f59e0b; color:#000; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🎡 Vire Wou a</button>
+        <div id="spinStatus" style="margin-top:10px; font-size:14px;">👆 Vire wou a — mize a dedwi nan Coins ou, genyen an antre nan Pwen Jwèt ou (20,000 pwen = $1). Ou ka jwe menm si ou pa nan live!</div>
+        <div style="margin-top:8px; font-size:13px;">🎁 Bwat ×0.1 • 🇭🇹 Drapo ×3 • 👑 Kouwòn ×0.3 • 🌟 Lejand ×1 • 🎉 Konfeti ×0.05 • 😢 Pèdi 0 • 💨 Zewo 0 • 🔄 Ankò gratis</div>
+      </div>
+    </div>
+    <div id="sheet-scramble" class="live-sheet">
+      <div class="sheet-head"><strong>🔤 Mo Andezòd</strong><button class="sheet-close">✕ Fèmen</button></div>
+      <div class="card">
+        <input id="scrWord" type="text" placeholder="Mo a (egz: AYITI)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+        <input id="scrPenalty" type="number" value="5" min="0" placeholder="Pwen pèdi pa move repons" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
+        <button id="scrStartBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🔤 Melanje epi Kòmanse</button>
+        <button id="scrStopBtn" style="background:#555; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">⏹ Kanpe Mo a</button>
+        <button id="scrAutoBtn" style="background:#2563eb; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">▶️ Mòd Otomatik</button>
+        <div id="scrStatus" style="margin-top:10px; font-size:14px;">👆 Animatè a ekri yon mo, app la melanje lèt yo, espektatè yo ranje yo nan chat la. Chak devine ak miz dedwi nan Coins ou; gayan an pran 70% po a an Pwen!</div>
+      </div>
+    </div>
+    <div id="sheet-jackpot" class="live-sheet">
+      <div class="sheet-head"><strong>🎰 Jackpot Ayiti</strong><button class="sheet-close">✕ Fèmen</button></div>
+      <div class="card" style="text-align:center;">
+        <div style="display:flex; justify-content:center; gap:10px; font-size:64px;">
+          <span id="reel1" style="background:#222; border-radius:12px; padding:10px 16px;">🇭🇹</span>
+          <span id="reel2" style="background:#222; border-radius:12px; padding:10px 16px;">🇭🇹</span>
+          <span id="reel3" style="background:#222; border-radius:12px; padding:10px 16px;">🇭🇹</span>
+        </div>
+        <input id="jackPrice" type="number" value="10" min="0" placeholder="Pri vire a (coins)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-top:14px; margin-bottom:8px;">
+        <button id="jackBtn" style="background:#dc2626; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🎰 Vire Jackpot la</button>
+        <div id="jackStatus" style="margin-top:10px; font-size:14px;">👆 3 imaj parey = 🎰 BIG WIN! Mize a dedwi nan Coins ou, genyen an antre nan Pwen Jwèt ou. Ou ka jwe menm si ou pa nan live!</div>
+        <div style="margin-top:8px; font-size:13px;">3×🇭🇹 = miz ×20 • 3×lòt = miz ×5 • 2 parey = miz ×0.5 • Sinon = pèdi</div>
+      </div>
+    </div>
+    <div id="sheet-report" class="live-sheet">
+      <div class="sheet-head"><strong>🚩 Signaler yon pwoblèm</strong><button class="sheet-close">✕ Fèmen</button></div>
+      <div id="reportForm" style="margin-top:10px;">
         <select id="reportReason" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:8px;">
           <option value="mine">Kontni ki enplike yon minè</option>
           <option value="seksyel">Kontni seksyèl ki pa apwopriye</option>
@@ -306,7 +382,7 @@
       <div id="reportStatus" style="margin-top:6px; font-size:13px;"></div>
     </div>
   </div>
-</main>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.23.0.js"></script>
@@ -324,6 +400,7 @@
   function levelFromSent(sent) { return Math.floor(sent / 2000) + 1; }
   function renderProfileCard(p) {
     document.getElementById('coinCount').textContent = p.coins;
+    const liveCoins = document.getElementById('liveCoinCount'); if (liveCoins) liveCoins.textContent = p.coins;
     const pc = document.getElementById('pointsCount'); if (pc) pc.textContent = (p.game_points || 0) + ' pwen';
     const avatarHtml = p.avatar_url
       ? '<img src="' + p.avatar_url + '" alt="Foto pwofil" style="width:64px; height:64px; border-radius:50%; object-fit:cover; flex-shrink:0;">'
@@ -668,16 +745,9 @@
       }
     } catch (e) {}
 
-    // Live yo
+    // Live yo (paj akèy)
     const { data: streams } = await db.from('streams').select('*').order('started_at', { ascending: false });
-    const sEl = document.getElementById('streams');
-    if (streams && streams.length) {
-      sEl.innerHTML = streams.map(s =>
-        '<div class="card">' + (s.is_live ? '<span class="live-badge">LIVE</span>' : '<span class="off-badge">FINI</span>') +
-        ' <strong>' + s.title + '</strong></div>').join('');
-    } else {
-      sEl.innerHTML = '<div class="card">Pa gen live kounye a.</div>';
-    }
+    renderStreamsList(streams);
 
     // Kado yo
     const { data: gifts } = await db.from('gifts').select('*').order('price_coins', { ascending: true });
@@ -1586,18 +1656,18 @@
     const reportStatus = document.getElementById('reportStatus');
     if (reportBtn) {
       reportBtn.addEventListener('click', () => {
+        openSheet('report');
         if (!window._sessionUser) { reportStatus.innerHTML = '<span class="err">❌ Konekte anvan ou siynale yon pwoblèm.</span>'; return; }
-        reportForm.style.display = reportForm.style.display === 'none' ? 'block' : 'none';
         reportStatus.textContent = '';
       });
-      document.getElementById('reportCancel').addEventListener('click', () => { reportForm.style.display = 'none'; reportDetail.value = ''; reportStatus.textContent = ''; });
+      document.getElementById('reportCancel').addEventListener('click', () => { closeSheets(); reportDetail.value = ''; reportStatus.textContent = ''; });
       document.getElementById('reportSend').addEventListener('click', async () => {
         if (!window._sessionUser) { reportStatus.innerHTML = '<span class="err">❌ Konekte anvan ou siynale yon pwoblèm.</span>'; return; }
         const reason = reportReason.value;
         const detail = (reportDetail.value || '').trim().replace(/[\n\r]/g, ' ');
         const { error } = await db.from('messages').insert({ text: '[SIGNALEMENT:' + reason + ':' + detail + ']', stream_id: streamId, sender_id: me.id });
         if (error) { reportStatus.innerHTML = '<span class="err">❌ Signalman an pa ale : ' + error.message + '</span>'; return; }
-        reportForm.style.display = 'none'; reportDetail.value = '';
+        reportDetail.value = '';
         reportStatus.innerHTML = '<span class="ok">✅ Signalman ou a voye. Ekip SheRoosLive la ap egzamine l.</span>';
       });
     }
@@ -1611,17 +1681,26 @@
   let agoraClient = null, localAudioTrack = null, localVideoTrack = null;
   let currentStreamRowId = null;
 
-  async function refreshStreams() {
-    if (!window._db) return;
-    const { data: streams } = await window._db.from('streams').select('*').order('started_at', { ascending: false });
+  // ===== PAJ AKÈY — lis live yo (kat yo klike pou antre nan chanm live la) =====
+  function renderStreamsList(streams) {
     const sEl = document.getElementById('streams');
+    if (!sEl) return;
     if (streams && streams.length) {
       sEl.innerHTML = streams.map(s =>
-        '<div class="card">' + (s.is_live ? '<span class="live-badge">LIVE</span>' : '<span class="off-badge">FINI</span>') +
-        ' <strong>' + s.title + '</strong></div>').join('');
+        '<div class="card stream-card" data-live="' + (s.is_live ? '1' : '0') + '" data-title="' + String(s.title || '').replace(/"/g, '&quot;') + '">' + (s.is_live ? '<span class="live-badge">LIVE</span>' : '<span class="off-badge">FINI</span>') +
+        ' <strong>' + s.title + '</strong>' + (s.is_live ? ' <span style="float:right;">▶️ Antre</span>' : '') + '</div>').join('');
+      sEl.querySelectorAll('.stream-card[data-live="1"]').forEach(el => {
+        el.addEventListener('click', () => enterLiveRoom(el.getAttribute('data-title') || 'SheRoosLive'));
+      });
     } else {
       sEl.innerHTML = '<div class="card">Pa gen live kounye a.</div>';
     }
+  }
+
+  async function refreshStreams() {
+    if (!window._db) return;
+    const { data: streams } = await window._db.from('streams').select('*').order('started_at', { ascending: false });
+    renderStreamsList(streams);
   }
 
   const liveStatus = document.getElementById('liveStatus');
@@ -1887,6 +1966,7 @@
       liveStatus.innerHTML = audioOnly
         ? '<span class="ok">🎙 OU AN LIVE — VWA SÈLMAN! Pa gen kamera.</span>'
         : '<span class="ok">🔴 OU AN LIVE! Videyo w ap pase sou SheRoosLive.</span>';
+      document.getElementById('liveSetup').style.display = 'none';
       if (window._db && window._me) {
         const title = document.getElementById('titleInput').value.trim() || ('Live ' + window._me.username);
         const { data: row } = await window._db.from('streams').insert({ host_id: window._me.id, title: title, is_live: true }).select().single();
@@ -1938,6 +2018,7 @@
       await agoraClient.setClientRole('audience');
       await agoraClient.join(AGORA_APP_ID, AGORA_CHANNEL, token, null);
       liveStatus.innerHTML = '<span class="ok">👀 W ap gade live la kòm espektatè. Ou pa bezwen kamera.</span>';
+      document.getElementById('liveSetup').style.display = 'none';
       goLiveBtn.style.display = 'none';
       audioLiveBtn.style.display = 'none';
       watchBtn.style.display = 'none';
@@ -1975,6 +2056,7 @@
       panelBtn.style.display = 'none';
       renderPanelSeats();
       liveStatus.innerHTML = '<span class="ok">🎛 OU SOU PANEL LA! Videyo w ap pase kounye a.</span>';
+      document.getElementById('liveSetup').style.display = 'none';
       await announceAvatar();
     } catch (e) {
       liveStatus.innerHTML = '<span class="err">❌ Erè panel: ' + e.message + '</span>';
@@ -1982,7 +2064,43 @@
   }
   panelBtn.addEventListener('click', joinPanel);
 
-  leaveBtn.addEventListener('click', async () => {
+  // ===== NAVIGASYON AKÈY ↔ LIVE =====
+  function showLiveRoom() {
+    document.getElementById('homeView').style.display = 'none';
+    document.getElementById('liveView').style.display = 'flex';
+    document.body.classList.add('in-live');
+    window.scrollTo(0, 0);
+  }
+  function showHomeView() {
+    document.getElementById('liveView').style.display = 'none';
+    document.getElementById('homeView').style.display = 'block';
+    document.body.classList.remove('in-live');
+    window.scrollTo(0, 0);
+  }
+  function enterLiveRoom(title) {
+    const t = document.getElementById('liveRoomTitle');
+    if (t) t.textContent = title || 'SheRoosLive';
+    const ls = document.getElementById('liveStatus');
+    if (ls && !panelActive) ls.innerHTML = '';
+    showLiveRoom();
+  }
+  function openSheet(name) {
+    const sheets = document.getElementById('liveSheets');
+    const target = document.getElementById('sheet-' + name);
+    if (!sheets || !target) return;
+    const wasOpen = target.style.display === 'block';
+    sheets.querySelectorAll('.live-sheet').forEach(s => { s.style.display = 'none'; });
+    if (wasOpen) { sheets.style.display = 'none'; return; }
+    target.style.display = 'block';
+    sheets.style.display = 'block';
+  }
+  function closeSheets() {
+    const sheets = document.getElementById('liveSheets');
+    if (!sheets) return;
+    sheets.querySelectorAll('.live-sheet').forEach(s => { s.style.display = 'none'; });
+    sheets.style.display = 'none';
+  }
+  async function leaveLive() {
     try {
       panelActive = false; panelPublishing = false; isPanelHost = false;
       if (localAudioTrack) { localAudioTrack.close(); localAudioTrack = null; }
@@ -2004,9 +2122,31 @@
       watchBtn.style.display = 'block';
       panelBtn.style.display = 'none';
       leaveBtn.style.display = 'none';
+      document.getElementById('liveSetup').style.display = 'flex';
+      closeSheets();
     } catch (e) {
       liveStatus.innerHTML = '<span class="err">❌ Erè: ' + e.message + '</span>';
     }
+  }
+  async function exitLiveRoom() {
+    if (panelActive) { await leaveLive(); }
+    showHomeView();
+  }
+  leaveBtn.addEventListener('click', exitLiveRoom);
+  document.getElementById('liveBackBtn').addEventListener('click', exitLiveRoom);
+  document.getElementById('enterLiveBtn').addEventListener('click', () => enterLiveRoom('SheRoosLive'));
+  document.querySelectorAll('.game-tile[data-game]').forEach(t => {
+    t.addEventListener('click', () => { enterLiveRoom('SheRoosLive'); openSheet(t.getAttribute('data-game')); });
+  });
+  document.querySelectorAll('.live-actions [data-sheet]').forEach(b => {
+    b.addEventListener('click', () => openSheet(b.getAttribute('data-sheet')));
+  });
+  document.querySelectorAll('.sheet-close').forEach(b => {
+    b.addEventListener('click', closeSheets);
+  });
+  document.getElementById('liveRechargeBtn').addEventListener('click', () => {
+    showHomeView();
+    setTimeout(() => { const el = document.getElementById('rechargeCard'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 60);
   });
 </script>
 </body>
