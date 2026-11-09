@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ht">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K&ograve;d fonksyon agora-token</title>
+<style>
+  body { background:#0f172a; color:#e2e8f0; font-family: system-ui, sans-serif; margin:0; padding:16px; }
+  h1 { font-size:18px; color:#fbbf24; margin:0 0 8px; }
+  p { font-size:15px; line-height:1.5; margin:0 0 12px; }
+  pre { background:#1e293b; border:1px solid #334155; border-radius:8px; padding:14px; overflow:auto; font-size:13px; line-height:1.45; white-space:pre; }
+  code { font-family: ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<h1>K&ograve;d fonksyon agora-token lan</h1>
+<p>Seleksyone tout (Ctrl+A) epi kopye (Ctrl+C), apre kole l nan edit&egrave; Supabase la (fonksyon <b>agora-token</b>, fichye index.ts).</p>
+<pre><code>// Supabase Edge Function: agora-token
+// ============================================================
+// Jenere yon token RTC Agora (v007) pou channel SheRoosLive la,
+// pou pesonn pa bezwen kole yon token manyèlman ankò.
+//
+// Sekrè yo (AGORA_APP_ID, AGORA_APP_CERTIFICATE) li nan Deno.env
+// — PA JANM mete yo nan kòd la, ni nan fichye HTML app lan.
+//
+// Algoritm lan se menm ak builder ofisyèl `agora-token@2.0.7`
+// (RtcTokenBuilder2 / AccessToken2) — verifye lokalman: token yo
+// soti idantik byte-pa-byte ak pakè ofisyèl la (menm salt, menm
+// issueTs, menm sètifika fo). Detay yo:
+//   token = "007" + base64(deflate(kontni))
+//   kontni = putBytes(siyati) + signing_info
+//   signing_info = putString(appId) + putUint32(issueTs)
+//                + putUint32(expire) + putUint32(salt)
+//                + putUint16(1) + servicePack
+//   servicePack = putUint16(1) + putTreeMapUInt32(privilèj)
+//               + putString(channel) + putString(uidStr)
+//   uid 0 → string vid = wildcard (nenpòt uid ka rantre)
+//   signing1  = HMAC-SHA256(kle=putUint32(issueTs), mesaj=appCertificate)
+//   signing   = HMAC-SHA256(kle=putUint32(salt), mesaj=signing1)
+//   siyati    = HMAC-SHA256(kle=signing, mesaj=signing_info)
+//   Privilèj: publisher {1,2,3,4} (Join, PublishAudio, PublishVideo,
+//   PublishData), subscriber {1} sèlman. expire = 86400 (24è).
+//   Tout packing little-endian. Siyati a se BYTE brit (putBytes),
+//   PA yon string.
+//
+// Rele l depi app lan:
+//   const { data, error } = await supabase.functions.invoke(
+//     'agora-token', { body: { channel: 'shelololive-test', role: 'publisher' } });
+//   // → { token, expiresAt, channel, role }
+// Verifikasyon JWT rete aktive pa defo (kle anon an voye otomatikman
+// pa functions.invoke) — sèlman app SheRoosLive la ka rele l.
+
+const ALLOWED_CHANNELS = new Set(["shelololive-test"]);
+const TOKEN_TTL_SECONDS = 86400; // 24è — menm dire ak token tanporè manyèl yo
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
+}
+
+// ---------- Packing little-endian (menm ak AccessToken2 ofisyèl la) ----------
+function concat(...parts: Uint8Array[]): Uint8Array {
+  const total = parts.reduce((n, p) =&gt; n + p.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const p of parts) {
+    out.set(p, off);
+    off += p.length;
+  }
+  return out;
+}
+function putUint16(v: number): Uint8Array {
+  const b = new Uint8Array(2);
+  new DataView(b.buffer).setUint16(0, v, true);
+  return b;
+}
+function putUint32(v: number): Uint8Array {
+  const b = new Uint8Array(4);
+  new DataView(b.buffer).setUint32(0, v, true);
+  return b;
+}
+function putString(s: string): Uint8Array {
+  const bytes = new TextEncoder().encode(s);
+  return concat(putUint16(bytes.length), bytes);
+}
+function putBytes(b: Uint8Array): Uint8Array {
+  return concat(putUint16(b.length), b);
+}
+function putTreeMapUInt32(m: Map&lt;number, number&gt;): Uint8Array {
+  const entries = [...m.entries()].sort((a, b) =&gt; a[0] - b[0]);
+  const parts: Uint8Array[] = [putUint16(entries.length)];
+  for (const [k, v] of entries) {
+    parts.push(putUint16(k), putUint32(v));
+  }
+  return concat(...parts);
+}
+
+// ---------- Kripto (Web Crypto) + deflate (zlib) ----------
+async function hmacSha256(
+  key: Uint8Array,
+  msg: Uint8Array,
+): Promise&lt;Uint8Array&gt; {
+  const ck = await crypto.subtle.importKey(
+    "raw",
+    key,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", ck, msg);
+  return new Uint8Array(sig);
+}
+
+async function deflateZlib(data: Uint8Array): Promise&lt;Uint8Array&gt; {
+  // CompressionStream('deflate') = fòma zlib (RFC 1950) — menm ak
+  // zlib.deflateSync ofisyèl la.
+  const cs = new CompressionStream("deflate");
+  const buf = await new Response(
+    new Blob([data]).stream().pipeThrough(cs),
+  ).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+function base64Encode(bytes: Uint8Array): string {
+  let s = "";
+  const CHUNK = 8192;
+  for (let i = 0; i &lt; bytes.length; i += CHUNK) {
+    s += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(s);
+}
+
+// ---------- Token RTC v007 ----------
+async function buildRtcToken(
+  appId: string,
+  appCertificate: string,
+  channel: string,
+  role: "publisher" | "subscriber",
+): Promise&lt;string&gt; {
+  const expire = TOKEN_TTL_SECONDS;
+  const issueTs = Math.floor(Date.now() / 1000);
+  const salt = crypto.getRandomValues(new Uint32Array(1))[0];
+
+  const privileges = new Map&lt;number, number&gt;();
+  privileges.set(1, expire); // JoinChannel
+  if (role === "publisher") {
+    privileges.set(2, expire); // PublishAudioStream
+    privileges.set(3, expire); // PublishVideoStream
+    privileges.set(4, expire); // PublishDataStream
+  }
+
+  // servicePack: RTC (type 1) + privilèj + channel + uid vid (wildcard)
+  const servicePack = concat(
+    putUint16(1),
+    putTreeMapUInt32(privileges),
+    putString(channel),
+    putString(""),
+  );
+  const signingInfo = concat(
+    putString(appId),
+    putUint32(issueTs),
+    putUint32(expire),
+    putUint32(salt),
+    putUint16(1),
+    servicePack,
+  );
+
+  // Derivasyon kle siyati a (lòd egzak ofisyèl la — kle/mesaj envèse
+  // ak sa yon moun ta atann). Sètifika a itilize kòm BYTE tèks brit,
+  // PA dekode hex.
+  const certBytes = new TextEncoder().encode(appCertificate);
+  const signing1 = await hmacSha256(putUint32(issueTs), certBytes);
+  const signing = await hmacSha256(putUint32(salt), signing1);
+  const signature = await hmacSha256(signing, signingInfo);
+
+  const content = concat(putBytes(signature), signingInfo);
+  const packed = await deflateZlib(content);
+  return "007" + base64Encode(packed);
+}
+
+// ---------- Handler ----------
+Deno.serve(async (req: Request): Promise&lt;Response&gt; =&gt; {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+  try {
+    if (req.method !== "POST") {
+      return json({ error: "Method not allowed" }, 405);
+    }
+    let body: { channel?: unknown; role?: unknown };
+    try {
+      body = await req.json();
+    } catch {
+      return json({ error: "Body a dwe JSON" }, 400);
+    }
+    const channel = body.channel;
+    const role = body.role;
+    if (typeof channel !== "string" || !ALLOWED_CHANNELS.has(channel)) {
+      return json({ error: "Channel pa otorize" }, 400);
+    }
+    if (role !== "publisher" &amp;&amp; role !== "subscriber") {
+      return json({ error: "Role pa valab (publisher oswa subscriber)" }, 400);
+    }
+    const appId = Deno.env.get("AGORA_APP_ID");
+    const appCertificate = Deno.env.get("AGORA_APP_CERTIFICATE");
+    if (!appId || !/^[0-9a-fA-F]{32}$/.test(appId)) {
+      return json({ error: "AGORA_APP_ID pa konfigire" }, 500);
+    }
+    if (!appCertificate || !/^[0-9a-fA-F]{32}$/.test(appCertificate)) {
+      return json({ error: "AGORA_APP_CERTIFICATE pa konfigire" }, 500);
+    }
+    const token = await buildRtcToken(appId, appCertificate, channel, role);
+    return json({
+      token,
+      expiresAt: Date.now() + TOKEN_TTL_SECONDS * 1000,
+      channel,
+      role,
+    });
+  } catch (e) {
+    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
+  }
+});
+</code></pre>
+</body>
+</html>
