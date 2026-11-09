@@ -56,6 +56,20 @@
   .live-sheet .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .live-sheet .sheet-head button { background: #374151; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
   .stream-card { cursor: pointer; }
+  /* ===== ONGLÈ PWOFL — kache pa defo (ba navigasyon anba a montre l) ===== */
+  #profileView { display: none; }
+  #homeView main, #profileView main { padding-bottom: 96px; }
+  /* ===== BA NAVIGASYON ANBA — stil Poppo (Akèy / + / Pwofil) ===== */
+  #bottomNav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 150; display: flex; align-items: flex-end; justify-content: space-around; background: rgba(10,10,25,.97); border-top: 1px solid #2a2a44; padding: 6px 8px calc(8px + env(safe-area-inset-bottom)); }
+  #bottomNav .nav-item { flex: 1; background: none; border: none; color: #9ca3af; font-size: 12px; font-weight: bold; cursor: pointer; padding: 6px 0 2px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  #bottomNav .nav-item .nav-ico { font-size: 22px; line-height: 1; }
+  #bottomNav .nav-item.active { color: #fff; }
+  #bottomNav .nav-plus { flex: 0 0 auto; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #e0245e, #7b2ff7); color: #fff; border: 3px solid #0a0a1a; font-size: 30px; font-weight: bold; cursor: pointer; margin-top: -24px; box-shadow: 0 4px 16px rgba(224,36,94,.5); }
+  body.in-live #bottomNav { display: none; }
+  /* ===== ONBOARDING PREMYE FWA (3 etap) — plen ekran, anwo tout bagay ===== */
+  #onboardingView { position: fixed; inset: 0; z-index: 300; background: #0a0a1a; overflow-y: auto; display: none; }
+  #onboardingView .ob-card { max-width: 480px; margin: 0 auto; padding: 24px 16px 40px; }
+  #onboardingView input, #onboardingView textarea { width: 100%; padding: 10px; border-radius: 8px; border: none; margin-bottom: 8px; }
 </style>
 </head>
 <body>
@@ -91,6 +105,15 @@
     </div>
   </div>
 
+
+</main>
+</div><!-- /homeView -->
+<!-- ===== ONGLÈ PWOFL — stil Poppo (pwofil, foto, koneksyon, referal, tach, rechaje, retrè) ===== -->
+<div id="profileView">
+<header>
+  <h1>👤 Pwofil mwen</h1>
+</header>
+<main>
   <h2>👤 Pwofil mwen</h2>
   <div id="profile"></div>
   <div class="card" style="margin-top:10px;">
@@ -228,7 +251,56 @@
   </div>
 
 </main>
-</div><!-- /homeView -->
+</div><!-- /profileView -->
+
+<!-- ===== BA NAVIGASYON ANBA — stil Poppo ===== -->
+<nav id="bottomNav">
+  <button class="nav-item active" id="navHomeBtn"><span class="nav-ico">🏠</span>Akèy</button>
+  <button class="nav-plus" id="navPlusBtn" aria-label="Kòmanse Live">+</button>
+  <button class="nav-item" id="navProfileBtn"><span class="nav-ico">👤</span>Pwofil</button>
+</nav>
+
+<!-- ===== ONBOARDING PREMYE FWA (3 etap) — parèt sèlman si pa konekte epi poko fin fè l ===== -->
+<div id="onboardingView">
+  <div class="ob-card">
+    <h1 style="text-align:center; font-size:26px; margin-bottom:4px;">🎥 SheRoosLive</h1>
+    <p style="text-align:center; color:#9ca3af; margin-bottom:20px;">Byenveni! 3 ti etap epi w pare pou live.</p>
+    <div style="text-align:center; color:#9ca3af; font-size:13px; margin-bottom:16px;">Etap <b id="obStepNum">1</b> sou 3</div>
+
+    <div id="obStep1" class="card">
+      <h2 id="obStep1Title" style="margin-top:0;">1️⃣ Kreye kont ou</h2>
+      <input id="obEmail" type="email" placeholder="Imèl ou">
+      <input id="obPass" type="password" placeholder="Modpas ou (omwen 6 karaktè)">
+      <input id="obUser" type="text" placeholder="Non itilizatè">
+      <input id="obRefCode" type="text" placeholder="Kòd referal (si yon moun envite w)">
+      <button id="obSignupBtn" style="background:#7b2ff7; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">📝 Kreye kont</button>
+      <button id="obLoginBtn" style="display:none; background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🔑 Konekte</button>
+      <div id="obStatus" style="margin-top:10px; font-size:14px;"></div>
+      <p style="text-align:center; margin-top:14px; font-size:14px;"><a href="#" id="obToggleMode" style="color:#7bffb2;">Mwen deja gen yon kont — Konekte</a></p>
+      <p style="text-align:center; margin-top:8px; font-size:13px;"><a href="#" id="obGuestLink" style="color:#9ca3af;">Kontinye kòm vizitè (san kont)</a></p>
+    </div>
+
+    <div id="obStep2" class="card" style="display:none;">
+      <h2 style="margin-top:0;">2️⃣ Konfigire pwofil ou</h2>
+      <div style="font-size:14px; margin-bottom:8px;">🖼 Foto pwofil ou</div>
+      <input id="obAvatarFile" type="file" accept="image/*">
+      <input id="obAvatarUrl" type="url" placeholder="oswa kole lyen foto a (https://...)">
+      <input id="obDisplayName" type="text" placeholder="Non itilizatè (non afiche)">
+      <textarea id="obBio" rows="3" placeholder="Bio ou (egz: Mwen renmen chante, mwen soti Ayiti...)"></textarea>
+      <button id="obSaveProfileBtn" style="background:#7b2ff7; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">💾 Sove epi kontinye</button>
+      <div id="obStep2Status" style="margin-top:10px; font-size:14px;"></div>
+      <p style="text-align:center; margin-top:12px; font-size:13px;"><a href="#" id="obSkipProfile" style="color:#9ca3af;">Sote etap sa a</a></p>
+    </div>
+
+    <div id="obStep3" class="card" style="display:none; text-align:center;">
+      <div style="font-size:56px;">🎉</div>
+      <h2 style="margin-top:0;">3️⃣ Ou pare!</h2>
+      <p style="font-size:15px;">Kont ou pare. Ale sou Akèy la pou w wè live yo, oswa peze <b>+</b> anba a pou w kòmanse pwòp live ou.</p>
+      <button id="obFinishBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">▶️ Ale sou Akèy la</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- ===== PAJ LIVE — chanm live plen ekran (TikTok / Poppo) ===== -->
 <div id="liveView">
@@ -271,7 +343,8 @@
       <div class="card">
         <h3 style="margin-bottom:10px;">📹 Live</h3>
         <input id="titleInput" type="text" placeholder="Tit live la (egz: Bonswa tout moun)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
-        <input id="tokenInput" type="text" placeholder="Kole token tanporè Agora a isit la" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
+        <div id="tokenFallbackMsg" style="display:none; font-size:13px; color:#ffd166; margin-bottom:8px;">⚠️ Token otomatik la pa mache — kole yon token tanporè Agora isit la (sekou sèlman).</div>
+        <input id="tokenInput" type="text" placeholder="Kole token tanporè Agora a isit la" style="display:none; width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
         <label for="goalInput" style="display:block; font-size:13px; margin-bottom:4px;">🎯 Objektif live la (coins) — kado yo resevwa pandan live la ap ranpli ba sa a</label>
         <input id="goalInput" type="number" value="10000" min="100" step="100" placeholder="10000" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
         <button id="goLiveBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🔴 Kòmanse Live</button>
@@ -736,6 +809,7 @@
       setupAuth(db);
       await loadData(db);
       await initReferralTasks(db);
+      maybeShowOnboarding();
     } catch (e) {
       statusEl.innerHTML = '<span class="err">❌ Erè: ' + e.message + '</span>';
     }
@@ -1749,6 +1823,40 @@
   // ===== AGORA — VIDEWO LIVE =====
   const AGORA_APP_ID = "bf3f3561961740ae834a1c057e4d1fec";
   const AGORA_CHANNEL = "shelololive-test";
+  // ===== TOKEN AGORA OTOMATIK (via Supabase Edge Function 'agora-token') =====
+  // App lan mande yon token fre nan fonksyon an chak fwa yon moun antre nan live.
+  // Token an rete nan memwa sèlman (pa nan localStorage), li ekspire apre 24è.
+  // Sètifika Agora a PA JANM nan fichye sa a — li nan sekrè Edge Function lan sèlman.
+  const _tokenCache = {};
+  async function getAgoraToken(role) {
+    const cached = _tokenCache[role];
+    if (cached && cached.expiresAt > Date.now() + 60000) return cached.token;
+    const { data, error } = await window._db.functions.invoke('agora-token', { body: { channel: AGORA_CHANNEL, role: role } });
+    if (error) throw new Error(error.message || 'Edge Function agora-token pa reponn');
+    if (!data || !data.token) throw new Error('Fonksyon an pa retounen token');
+    _tokenCache[role] = { token: data.token, expiresAt: data.expiresAt || (Date.now() + 86400000) };
+    return data.token;
+  }
+  function showTokenFallback(msg) {
+    const ti = document.getElementById('tokenInput');
+    const fm = document.getElementById('tokenFallbackMsg');
+    if (ti) ti.style.display = 'block';
+    if (fm) fm.style.display = 'block';
+    if (msg) liveStatus.innerHTML = '<span class="err">⚠️ ' + msg + ' — kole yon token manyèl anwo a, apre sa peze bouton an ankò.</span>';
+  }
+  function hideTokenFallback() {
+    const ti = document.getElementById('tokenInput');
+    const fm = document.getElementById('tokenFallbackMsg');
+    if (ti) ti.style.display = 'none';
+    if (fm) fm.style.display = 'none';
+  }
+  async function resolveAgoraToken(role) {
+    const manualEl = document.getElementById('tokenInput');
+    const manual = manualEl ? manualEl.value.trim() : '';
+    if (manual) return manual;
+    try { const t = await getAgoraToken(role); hideTokenFallback(); return t; }
+    catch (e) { showTokenFallback(e.message); return null; }
+  }
   let agoraClient = null, localAudioTrack = null, localVideoTrack = null;
   let currentStreamRowId = null;
 
@@ -2043,7 +2151,7 @@
         panelBtn.style.display = 'block';
         renderPanelSeats();
         liveStatus.innerHTML = '<span>❌ Animatè a retire w sou panel la. Ou tounen espektatè.</span>';
-        const token = document.getElementById('tokenInput').value.trim();
+        const token = await resolveAgoraToken('subscriber');
         if (token) {
           await agoraClient.setClientRole('audience');
           await agoraClient.join(AGORA_APP_ID, AGORA_CHANNEL, token, null);
@@ -2055,8 +2163,8 @@
   }
 
   async function startLive(audioOnly) {
-    const token = document.getElementById('tokenInput').value.trim();
-    if (!token) { liveStatus.innerHTML = '<span class="err">⚠️ Kole token tanporè a anvan w kòmanse.</span>'; return; }
+    const token = await resolveAgoraToken('publisher');
+    if (!token) return;
     if (!window.AgoraRTC) { liveStatus.innerHTML = '<span class="err">⚠️ Bibliyotèk Agora a pa chaje — verifye koneksyon entènèt la epi rafrechit paj la.</span>'; return; }
     try {
       liveStatus.textContent = '⏳ N ap konekte ak Agora…';
@@ -2127,8 +2235,8 @@
 
   // ===== MÒD ESPEKTATÈ — gade san kamera =====
   async function watchLive() {
-    const token = document.getElementById('tokenInput').value.trim();
-    if (!token) { liveStatus.innerHTML = '<span class="err">⚠️ Kole token tanporè a anvan w gade.</span>'; return; }
+    const token = await resolveAgoraToken('subscriber');
+    if (!token) return;
     if (!window.AgoraRTC) { liveStatus.innerHTML = '<span class="err">⚠️ Bibliyotèk Agora a pa chaje — verifye koneksyon entènèt la epi rafrechit paj la.</span>'; return; }
     try {
       liveStatus.textContent = '⏳ N ap konekte ak live la…';
@@ -2173,7 +2281,8 @@
   // ===== MONTE SOU PANEL — espektatè vin envite videyo (san nouvo liy streams) =====
   async function joinPanel() {
     if (!agoraClient) { liveStatus.innerHTML = '<span class="err">⚠️ Antre nan live la kòm espektatè anvan w monte sou panel la.</span>'; return; }
-    const token = document.getElementById('tokenInput').value.trim();
+    const token = await resolveAgoraToken('publisher');
+    if (!token) return;
     try {
       liveStatus.textContent = '⏳ N ap mete w sou panel la…';
       try {
@@ -2201,18 +2310,181 @@
   }
   panelBtn.addEventListener('click', joinPanel);
 
+  // ===== ONBOARDING PREMYE FWA (3 etap) =====
+  // Parèt sèlman si moun nan PA konekte epi li poko janm fin fè onboarding lan.
+  // Moun ki deja gen kont wè mòd Koneksyon an olye etap "Kreye kont" lan.
+  const OB_FLAG = 'sheroos_onboarded';
+  let obLoggedIn = false;
+  let obMode = 'signup';
+  function obShowStep(n) {
+    ['1', '2', '3'].forEach(i => {
+      const el = document.getElementById('obStep' + i);
+      if (el) el.style.display = (i === String(n)) ? 'block' : 'none';
+    });
+    const num = document.getElementById('obStepNum');
+    if (num) num.textContent = n;
+  }
+  function obFinish() {
+    try { localStorage.setItem(OB_FLAG, '1'); } catch (e) {}
+    const ov = document.getElementById('onboardingView');
+    if (ov) ov.style.display = 'none';
+    if (obLoggedIn) { location.reload(); return; } // rechaje pou chaje vre pwofil la
+    showTab('home');
+  }
+  function maybeShowOnboarding() {
+    const ov = document.getElementById('onboardingView');
+    if (!ov) return;
+    let done = false;
+    try { done = localStorage.getItem(OB_FLAG) === '1'; } catch (e) {}
+    if (window._sessionUser || done) return;
+    ov.style.display = 'block';
+    obShowStep(1);
+  }
+  function setObMode(mode) {
+    obMode = mode;
+    const login = mode === 'login';
+    const title = document.getElementById('obStep1Title');
+    if (title) title.textContent = login ? '🔑 Konekte sou kont ou' : '1️⃣ Kreye kont ou';
+    const u = document.getElementById('obUser');
+    if (u) u.style.display = login ? 'none' : 'block';
+    const r = document.getElementById('obRefCode');
+    if (r) r.style.display = login ? 'none' : 'block';
+    const sb = document.getElementById('obSignupBtn');
+    if (sb) sb.style.display = login ? 'none' : 'block';
+    const lb = document.getElementById('obLoginBtn');
+    if (lb) lb.style.display = login ? 'block' : 'none';
+    const tg = document.getElementById('obToggleMode');
+    if (tg) tg.textContent = login ? 'Mwen poko gen kont — Kreye youn' : 'Mwen deja gen yon kont — Konekte';
+  }
+  function setupOnboarding() {
+    const st = document.getElementById('obStatus');
+    const emailEl = document.getElementById('obEmail');
+    const passEl = document.getElementById('obPass');
+    const userEl = document.getElementById('obUser');
+    document.getElementById('obToggleMode').addEventListener('click', (e) => {
+      e.preventDefault();
+      setObMode(obMode === 'login' ? 'signup' : 'login');
+    });
+    document.getElementById('obGuestLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      obFinish(); // vizitè: pa bezwen kont pou gade
+    });
+    document.getElementById('obSignupBtn').addEventListener('click', async () => {
+      const email = emailEl.value.trim(), pass = passEl.value, username = userEl.value.trim();
+      if (!email || !pass) { st.innerHTML = '<span class="err">⚠️ Ekri imèl ou ak modpas ou.</span>'; return; }
+      if (pass.length < 6) { st.innerHTML = '<span class="err">⚠️ Modpas la dwe gen omwen 6 karaktè.</span>'; return; }
+      st.textContent = '⏳ N ap kreye kont lan…';
+      const { data, error } = await window._db.auth.signUp({ email: email, password: pass });
+      if (error) { st.innerHTML = '<span class="err">❌ ' + error.message + '</span>'; return; }
+      if (data.session) {
+        const prof = await ensureProfile(window._db, data.session.user, username);
+        if (!prof) { st.innerHTML = '<span class="err">❌ Kont lan kreye, men pwofil la pa kreye: ' + (window._authErr || '') + '</span>'; return; }
+        const refCode = document.getElementById('obRefCode').value.trim();
+        if (refCode) {
+          const ok = await applyReferral(window._db, prof, refCode);
+          if (!ok) { try { localStorage.setItem('pendingRef', refCode); } catch (e) {} }
+        }
+        obLoggedIn = true;
+        const dn = document.getElementById('obDisplayName');
+        if (dn) dn.value = prof.username || username || '';
+        obShowStep(2);
+      } else {
+        const refCode = document.getElementById('obRefCode').value.trim();
+        if (refCode) { try { localStorage.setItem('pendingRef', refCode); } catch (e) {} }
+        if (username) { try { localStorage.setItem('pendingUsername', username); } catch (e) {} }
+        st.innerHTML = '<span class="ok">✅ Kont lan kreye! Verifye imèl ou (lyen konfimasyon), apre sa konekte isit la.</span>';
+        setObMode('login');
+      }
+    });
+    document.getElementById('obLoginBtn').addEventListener('click', async () => {
+      const email = emailEl.value.trim(), pass = passEl.value;
+      if (!email || !pass) { st.innerHTML = '<span class="err">⚠️ Ekri imèl ou ak modpas ou.</span>'; return; }
+      st.textContent = '⏳ N ap konekte w…';
+      const { data, error } = await window._db.auth.signInWithPassword({ email: email, password: pass });
+      if (error) { st.innerHTML = '<span class="err">❌ ' + error.message + '</span>'; return; }
+      if (data.session) {
+        let pendingName = null;
+        try { pendingName = localStorage.getItem('pendingUsername'); } catch (e) {}
+        const prof = await ensureProfile(window._db, data.session.user, pendingName);
+        if (pendingName) { try { localStorage.removeItem('pendingUsername'); } catch (e) {} }
+        if (!prof) { st.innerHTML = '<span class="err">❌ Ou konekte, men pwofil la pa kreye: ' + (window._authErr || '') + '</span>'; return; }
+        const refCode = document.getElementById('obRefCode').value.trim();
+        if (refCode && !prof.referred_by) { await applyReferral(window._db, prof, refCode); }
+        obLoggedIn = true;
+        if (!prof.bio && !prof.avatar_url) {
+          const dn = document.getElementById('obDisplayName');
+          if (dn) dn.value = prof.username || '';
+          obShowStep(2); // pwofil vid → konfigire l
+        } else {
+          obShowStep(3); // pwofil deja konplè → fini
+        }
+      }
+    });
+    document.getElementById('obSaveProfileBtn').addEventListener('click', async () => {
+      const st2 = document.getElementById('obStep2Status');
+      const { data: sess } = await window._db.auth.getSession();
+      if (!sess || !sess.session) { st2.innerHTML = '<span class="err">⚠️ Sesyon an pèdi — tounen nan etap 1 epi konekte ankò.</span>'; return; }
+      const sessUser = sess.session.user;
+      const fileInput = document.getElementById('obAvatarFile');
+      const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+      const urlInput = (document.getElementById('obAvatarUrl').value || '').trim();
+      const displayName = (document.getElementById('obDisplayName').value || '').trim();
+      const bio = (document.getElementById('obBio').value || '').trim();
+      let url = urlInput;
+      if (file) {
+        if (!file.type || file.type.indexOf('image/') !== 0) { st2.innerHTML = '<span class="err">⚠️ Chwazi yon fichye imaj.</span>'; return; }
+        st2.textContent = '⏳ N ap konprese foto a…';
+        try { url = await compressAvatar(file); }
+        catch (e) { st2.innerHTML = '<span class="err">❌ Foto a pa louvri — eseye yon foto JPG oswa PNG.</span>'; return; }
+      } else if (url && !/^https?:\/\/.+/i.test(url)) { st2.innerHTML = '<span class="err">⚠️ Lyen an dwe kòmanse ak https://</span>'; return; }
+      const patch = { bio: bio };
+      if (url) patch.avatar_url = url;
+      if (displayName) patch.username = displayName;
+      const { error } = await window._db.from('profiles').update(patch).eq('auth_id', sessUser.id);
+      if (error) { st2.innerHTML = '<span class="err">❌ ' + error.message + '</span>'; return; }
+      const prof = await ensureProfile(window._db, sessUser, displayName);
+      if (prof) { window._me = prof; renderProfileCard(prof); }
+      obShowStep(3);
+    });
+    document.getElementById('obSkipProfile').addEventListener('click', (e) => {
+      e.preventDefault();
+      obShowStep(3);
+    });
+    document.getElementById('obFinishBtn').addEventListener('click', obFinish);
+  }
+
   // ===== NAVIGASYON AKÈY ↔ LIVE =====
+  // ===== NAVIGASYON ONGLÈ — stil Poppo (Akèy / + / Pwofil) =====
+  let currentTab = 'home';
+  function showTab(tab) {
+    currentTab = tab;
+    const home = document.getElementById('homeView');
+    const prof = document.getElementById('profileView');
+    if (tab === 'profile') {
+      if (home) home.style.display = 'none';
+      if (prof) prof.style.display = 'block';
+    } else {
+      if (prof) prof.style.display = 'none';
+      if (home) home.style.display = 'block';
+    }
+    const hb = document.getElementById('navHomeBtn');
+    const pb = document.getElementById('navProfileBtn');
+    if (hb) hb.classList.toggle('active', tab === 'home');
+    if (pb) pb.classList.toggle('active', tab === 'profile');
+    window.scrollTo(0, 0);
+  }
   function showLiveRoom() {
     document.getElementById('homeView').style.display = 'none';
+    const pv = document.getElementById('profileView');
+    if (pv) pv.style.display = 'none';
     document.getElementById('liveView').style.display = 'flex';
     document.body.classList.add('in-live');
     window.scrollTo(0, 0);
   }
   function showHomeView() {
     document.getElementById('liveView').style.display = 'none';
-    document.getElementById('homeView').style.display = 'block';
     document.body.classList.remove('in-live');
-    window.scrollTo(0, 0);
+    showTab('home');
   }
   function enterLiveRoom(title) {
     const t = document.getElementById('liveRoomTitle');
@@ -2272,6 +2544,11 @@
   leaveBtn.addEventListener('click', exitLiveRoom);
   document.getElementById('liveBackBtn').addEventListener('click', exitLiveRoom);
   document.getElementById('enterLiveBtn').addEventListener('click', () => enterLiveRoom('SheRoosLive'));
+  // Ba navigasyon anba a (Poppo): Akèy ↔ Pwofil, + = Kòmanse Live
+  document.getElementById('navHomeBtn').addEventListener('click', () => showTab('home'));
+  document.getElementById('navProfileBtn').addEventListener('click', () => showTab('profile'));
+  document.getElementById('navPlusBtn').addEventListener('click', () => enterLiveRoom('SheRoosLive'));
+  setupOnboarding();
   document.querySelectorAll('.game-tile[data-game]').forEach(t => {
     t.addEventListener('click', () => { enterLiveRoom('SheRoosLive'); openSheet(t.getAttribute('data-game')); });
   });
@@ -2282,7 +2559,7 @@
     b.addEventListener('click', closeSheets);
   });
   document.getElementById('liveRechargeBtn').addEventListener('click', () => {
-    showHomeView();
+    showTab('profile');
     setTimeout(() => { const el = document.getElementById('rechargeCard'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 60);
   });
 </script>
