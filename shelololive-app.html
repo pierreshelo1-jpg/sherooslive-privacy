@@ -29,6 +29,17 @@
   .live-topbar button { background: #2a1e4d; color: #fff; border: none; padding: 8px 12px; border-radius: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
   .live-topbar #leaveBtn { background: #991b1b; }
   .live-topbar #reportBtn { background: #991b1b; }
+  /* ===== BA OBJEKTIF LIVE (stil Poppo) — anba topbar chanm live la ===== */
+  .live-goalbar { flex: none; background: linear-gradient(90deg, #2a0a3d, #4a1030); border-bottom: 1px solid #2a1e4d; padding: 8px 12px; }
+  .live-goalbar .goal-row { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; }
+  .live-goalbar .goal-row .goal-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .live-goalbar .goal-track { height: 10px; background: #1d1433; border-radius: 6px; margin-top: 6px; overflow: hidden; }
+  .live-goalbar .goal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #f59e0b, #e0245e); border-radius: 6px; transition: width .5s ease; }
+  .live-goalbar .goal-done { color: #7bffb2; }
+  .live-goalbar .goal-edit { background: #2a1e4d; color: #fff; border: none; padding: 5px 10px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+  .live-goalbar .goal-editor { display: none; gap: 6px; margin-top: 8px; }
+  .live-goalbar .goal-editor input { flex: 1; padding: 8px; border-radius: 8px; border: none; min-width: 0; }
+  .live-goalbar .goal-editor button { background: #0e9f6e; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; }
   #liveStage { flex: 1; position: relative; min-height: 0; overflow: hidden; background: #000; }
   #liveStatus { position: absolute; top: 8px; left: 10px; right: 10px; z-index: 11; font-size: 13px; text-shadow: 0 1px 3px #000; pointer-events: none; }
   #panelGrid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; align-content: start; overflow-y: auto; }
@@ -228,6 +239,20 @@
     <button id="reportBtn">🚩 Signaler</button>
     <button id="leaveBtn" style="display:none;">⏹ Kite</button>
   </div>
+  <!-- Ba objektif live la (stil Poppo) — pwogrè = kado resevwa pandan live sa a -->
+  <div id="liveGoalBar" class="live-goalbar">
+    <div class="goal-row">
+      <span>🎯 Objektif</span>
+      <span class="goal-text" id="liveGoalText">0 / 10,000 coins (0%)</span>
+      <button id="liveGoalEditBtn" class="goal-edit" style="display:none;">✏️ Mete objektif</button>
+    </div>
+    <div class="goal-track"><div id="liveGoalFill" class="goal-fill"></div></div>
+    <div id="liveGoalEditor" class="goal-editor">
+      <input id="liveGoalInput" type="number" value="10000" min="100" step="100" placeholder="Objektif (coins)">
+      <button id="liveGoalSaveBtn">💾 Sove</button>
+      <button id="liveGoalCancelBtn" style="background:#555;">Anile</button>
+    </div>
+  </div>
   <div id="liveStage">
     <div id="liveStatus"></div>
     <div id="panelGrid">
@@ -247,6 +272,8 @@
         <h3 style="margin-bottom:10px;">📹 Live</h3>
         <input id="titleInput" type="text" placeholder="Tit live la (egz: Bonswa tout moun)" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
         <input id="tokenInput" type="text" placeholder="Kole token tanporè Agora a isit la" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
+        <label for="goalInput" style="display:block; font-size:13px; margin-bottom:4px;">🎯 Objektif live la (coins) — kado yo resevwa pandan live la ap ranpli ba sa a</label>
+        <input id="goalInput" type="number" value="10000" min="100" step="100" placeholder="10000" style="width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:10px;">
         <button id="goLiveBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🔴 Kòmanse Live</button>
         <button id="audioLiveBtn" style="background:#4a3aff; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">🎙 Live ak Vwa Sèlman</button>
         <button id="watchBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">👀 Gade Live la (Espektatè)</button>
@@ -1487,9 +1514,45 @@
     }
 
     const { data: msgs } = await db.from('messages').select('*').order('created_at', { ascending: false }).limit(50);
-    (msgs || []).filter(m => m.text.indexOf('[PANEL:') !== 0 && (isHost || m.text.indexOf('[SIGNALEMENT:') !== 0)).reverse().forEach(m => {
+    (msgs || []).filter(m => m.text.indexOf('[PANEL:') !== 0 && m.text.indexOf('[GOALSTART:') !== 0 && m.text.indexOf('[GOALSET:') !== 0 && (isHost || m.text.indexOf('[SIGNALEMENT:') !== 0)).reverse().forEach(m => {
       if (m.text.indexOf('[SIGNALEMENT:') === 0) { renderReport(m); } else { renderMsg(m); }
     });
+
+    // ===== BA OBJEKTIF LIVE — ratrapaj: sib + pwogrè depi live sa a kòmanse =====
+    // Sib la = dènye [GOALSTART:/GOALSET:] nan 50 dènye mesaj yo (default 10,000).
+    // Pwogrè a = sòm pri kado yo nan mesaj yo depi live sa a kòmanse (started_at
+    // stream live la, oswa dènye [GOALSTART:] a). Si pa gen live aktif, ba a
+    // kòmanse a zewo — pwochen [GOALSTART:] (lè animatè a kòmanse yon live) ap
+    // senkronize tout onglè yo.
+    try {
+      let startMs = null;
+      const { data: cur } = await db.from('streams').select('started_at, is_live').eq('id', streamId).maybeSingle();
+      if (cur && cur.is_live && cur.started_at) startMs = new Date(cur.started_at).getTime();
+      let latestGoal = null, latestGoalTime = 0, latestStart = 0;
+      (msgs || []).forEach(m => {
+        if (!m.text) return;
+        const gs = m.text.match(/^\[GOAL(START|SET):(\d+)\]$/);
+        if (!gs) return;
+        const t = new Date(m.created_at).getTime();
+        if (t >= latestGoalTime) { latestGoalTime = t; latestGoal = parseInt(gs[2], 10); }
+        if (gs[1] === 'START' && t > latestStart) latestStart = t;
+      });
+      if (latestGoal && latestGoal > 0) liveGoalTarget = latestGoal;
+      if (latestStart > 0) startMs = latestStart;
+      if (!startMs) { liveGoalStartedAt = Date.now(); liveGoalReceived = 0; }
+      else {
+        liveGoalStartedAt = startMs;
+        let sum = 0;
+        (msgs || []).forEach(m => {
+          const price = goalPriceOfGiftMsg(m.text);
+          if (!price) return;
+          const mt = new Date(m.created_at).getTime();
+          if (mt >= startMs) sum += price;
+        });
+        liveGoalReceived = sum;
+      }
+    } catch (e) {}
+    updateGoalBar();
     (msgs || []).slice().reverse().forEach(m => {
       noteScrambleMsg(m.text);
       if (m.text.indexOf('🎯 QUIZ!') === 0) { const fm = m.text.match(/Antre: (\d+) coins/); if (fm) window._quizFee = parseInt(fm[1], 10); window._quizLive = true; window._quizJoined = false; }
@@ -1503,6 +1566,8 @@
           { const lm = payload.new.text.match(/ \[NIVO:(\d+)\]\s*$/); if (lm) { msgLvl = parseInt(lm[1], 10); payload.new.text = payload.new.text.slice(0, lm.index); } }
           if (payload.new.text.indexOf('[PANEL:') === 0) { handlePanelControl(payload.new.text, payload.new.sender_id); return; }
           if (payload.new.text.indexOf('[SIGNALEMENT:') === 0) { if (isHost) renderReport(payload.new); return; }
+          if (payload.new.text.indexOf('[GOALSTART:') === 0) { const t = parseInt(payload.new.text.replace(/[^0-9]/g, ''), 10) || 0; if (t > 0) { liveGoalTarget = t; liveGoalReceived = 0; liveGoalStartedAt = new Date(payload.new.created_at).getTime(); updateGoalBar(); } return; }
+          if (payload.new.text.indexOf('[GOALSET:') === 0) { const t = parseInt(payload.new.text.replace(/[^0-9]/g, ''), 10) || 0; if (t > 0) { liveGoalTarget = t; updateGoalBar(); } return; }
           if (payload.new.text.indexOf('[QUIZ:ANTRE:') === 0) {
             if (window._quiz) { const f = parseInt(payload.new.text.replace(/[^0-9]/g, ''), 10) || 0; window._quiz.pot += f; window._quiz.entrants[payload.new.sender_id] = (window._quiz.entrants[payload.new.sender_id] || 0) + f; }
             return;
@@ -1513,7 +1578,13 @@
           if (payload.new.text.indexOf('🏆 Gayan Quiz la se') === 0 || payload.new.text.indexOf('⏹ Quiz la fini') === 0) { window._quizLive = false; }
           if (payload.new.text.includes('voye')) {
             const hit = Object.keys(GIFT_EMOJI).sort((a, b) => b.length - a.length).find(n => payload.new.text.includes(n));
-            if (hit) celebrateForGift(hit);
+            if (hit) {
+              celebrateForGift(hit);
+              // Ba objektif: ajoute pri kado a nan pwogrè live sa a
+              const price = goalPriceOfGiftMsg(payload.new.text);
+              const mt = new Date(payload.new.created_at).getTime();
+              if (price > 0 && (!liveGoalStartedAt || mt >= liveGoalStartedAt)) { liveGoalReceived += price; updateGoalBar(); }
+            }
           }
           if (window._quiz && normAnswer(payload.new.text) === window._quiz.answer) {
             if (window._quiz.entrants[payload.new.sender_id] === undefined) {
@@ -1711,6 +1782,65 @@
   const panelBtn = document.getElementById('panelBtn');
   let panelActive = false, panelPublishing = false;
   let isPanelHost = false;
+
+  // ===== BA OBJEKTIF LIVE (stil Poppo) — sib + pwogrè kado pandan live sa a =====
+  // Pwogrè a = sòm pri kado yo resevwa depi live sa a kòmanse (via mesaj chat yo,
+  // menm jan ak PK — tout onglè yo dakò san nouvo tab). Sib la pataje via mesaj
+  // kache [GOALSTART:<sib>] (nouvo live → pwogrè zewo) ak [GOALSET:<sib>]
+  // (chanjman sib pandan live la → pwogrè a rete).
+  let liveGoalTarget = 10000;
+  let liveGoalReceived = 0;
+  let liveGoalStartedAt = null;
+
+  function updateGoalBar() {
+    const txt = document.getElementById('liveGoalText');
+    const fill = document.getElementById('liveGoalFill');
+    const editBtn = document.getElementById('liveGoalEditBtn');
+    if (!txt || !fill) return;
+    const target = (liveGoalTarget > 0) ? liveGoalTarget : 10000;
+    const pct = Math.min(100, Math.floor((liveGoalReceived / target) * 100));
+    const done = liveGoalReceived >= target;
+    txt.textContent = (done ? '🎉 Objektif rive! ' : '') + liveGoalReceived.toLocaleString() + ' / ' + target.toLocaleString() + ' coins (' + Math.floor((liveGoalReceived / target) * 100) + '%)';
+    txt.classList.toggle('goal-done', done);
+    fill.style.width = pct + '%';
+    // Bouton edit la vizib pou animatè a sèlman (onglè ki te kòmanse live la)
+    if (editBtn) editBtn.style.display = (window._goalHost === true) ? 'block' : 'none';
+  }
+
+  // Pri yon mesaj kado (fòma: "🎁 X voye 🌹 Rose (10 coins)!") — pou ba objektif la
+  function goalPriceOfGiftMsg(text) {
+    if (!text || text.indexOf('🎁') !== 0 || text.indexOf(' voye ') === -1) return 0;
+    const hit = Object.keys(GIFT_EMOJI).sort((a, b) => b.length - a.length).find(n => text.includes(n));
+    if (!hit) return 0;
+    const pm = text.match(/\((\d[\d,]*) coins\)/);
+    return pm ? (parseInt(pm[1].replace(/,/g, ''), 10) || 0) : 0;
+  }
+
+  document.getElementById('liveGoalEditBtn').addEventListener('click', () => {
+    const ed = document.getElementById('liveGoalEditor');
+    const inp = document.getElementById('liveGoalInput');
+    if (!ed || !inp) return;
+    inp.value = liveGoalTarget;
+    ed.style.display = 'flex';
+    inp.focus();
+  });
+  document.getElementById('liveGoalCancelBtn').addEventListener('click', () => {
+    const ed = document.getElementById('liveGoalEditor');
+    if (ed) ed.style.display = 'none';
+  });
+  document.getElementById('liveGoalSaveBtn').addEventListener('click', async () => {
+    const inp = document.getElementById('liveGoalInput');
+    const v = parseInt((inp || {}).value, 10);
+    if (!v || v < 100) { if (inp) inp.value = liveGoalTarget; return; }
+    liveGoalTarget = v;
+    updateGoalBar();
+    const ed = document.getElementById('liveGoalEditor');
+    if (ed) ed.style.display = 'none';
+    // Anonse nouvo sib la bay tout onglè yo (mesaj kache, pa parèt nan chat la)
+    if (window._db && window._me) {
+      await window._db.from('messages').insert({ text: '[GOALSET:' + v + ']', stream_id: currentStreamRowId || window._streamId || 1, sender_id: window._me.id });
+    }
+  });
 
   // ===== PANEL 9 PLAS — griy 3x3: plas ou + envite yo + plas vid =====
   function renderPanelSeats() {
@@ -1930,7 +2060,7 @@
     if (!window.AgoraRTC) { liveStatus.innerHTML = '<span class="err">⚠️ Bibliyotèk Agora a pa chaje — verifye koneksyon entènèt la epi rafrechit paj la.</span>'; return; }
     try {
       liveStatus.textContent = '⏳ N ap konekte ak Agora…';
-      panelActive = true; panelPublishing = true; isPanelHost = true;
+      panelActive = true; panelPublishing = true; isPanelHost = true; window._goalHost = true;
       agoraClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
 
       // Lè yon lòt moun antre nan menm live la, montre videyo l
@@ -1972,6 +2102,13 @@
         const { data: row } = await window._db.from('streams').insert({ host_id: window._me.id, title: title, is_live: true }).select().single();
         if (row) { currentStreamRowId = row.id; refreshStreams(); }
       }
+      // Ba objektif: nouvo live = pwogrè a zewo, sib la soti nan chan setup la (default 10,000)
+      const goalVal = parseInt((document.getElementById('goalInput') || {}).value, 10);
+      const goalTarget = (goalVal && goalVal >= 100) ? goalVal : 10000;
+      liveGoalTarget = goalTarget; liveGoalReceived = 0; liveGoalStartedAt = Date.now(); updateGoalBar();
+      if (window._db && window._me) {
+        await window._db.from('messages').insert({ text: '[GOALSTART:' + goalTarget + ']', stream_id: currentStreamRowId || window._streamId || 1, sender_id: window._me.id });
+      }
       goLiveBtn.style.display = 'none';
       audioLiveBtn.style.display = 'none';
       watchBtn.style.display = 'none';
@@ -1995,7 +2132,7 @@
     if (!window.AgoraRTC) { liveStatus.innerHTML = '<span class="err">⚠️ Bibliyotèk Agora a pa chaje — verifye koneksyon entènèt la epi rafrechit paj la.</span>'; return; }
     try {
       liveStatus.textContent = '⏳ N ap konekte ak live la…';
-      panelActive = true; panelPublishing = false; isPanelHost = false;
+      panelActive = true; panelPublishing = false; isPanelHost = false; window._goalHost = false; updateGoalBar();
       agoraClient = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
       agoraClient.on('user-published', async (user, mediaType) => {
         await agoraClient.subscribe(user, mediaType);
@@ -2102,7 +2239,7 @@
   }
   async function leaveLive() {
     try {
-      panelActive = false; panelPublishing = false; isPanelHost = false;
+      panelActive = false; panelPublishing = false; isPanelHost = false; window._goalHost = false; updateGoalBar();
       if (localAudioTrack) { localAudioTrack.close(); localAudioTrack = null; }
       if (localVideoTrack) { localVideoTrack.close(); localVideoTrack = null; }
       if (agoraClient) { await agoraClient.leave(); agoraClient = null; }
