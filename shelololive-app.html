@@ -29,6 +29,7 @@
   .live-topbar button { background: #2a1e4d; color: #fff; border: none; padding: 8px 12px; border-radius: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
   .live-topbar #leaveBtn { background: #991b1b; }
   .live-topbar #reportBtn { background: #991b1b; }
+  .live-topbar #shareBtn { background: #0e7490; }
   /* ===== BA OBJEKTIF LIVE (stil Poppo) — anba topbar chanm live la ===== */
   .live-goalbar { flex: none; background: linear-gradient(90deg, #2a0a3d, #4a1030); border-bottom: 1px solid #2a1e4d; padding: 8px 12px; }
   .live-goalbar .goal-row { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; }
@@ -309,6 +310,7 @@
     <div class="room-title">🔴 LIVE · <span id="liveRoomTitle">SheRoosLive</span></div>
     <div style="font-weight:bold; white-space:nowrap;">🪙 <span id="liveCoinCount">…</span></div>
     <button id="reportBtn">🚩 Signaler</button>
+    <button id="shareBtn">📤 Pataje</button>
     <button id="leaveBtn" style="display:none;">⏹ Kite</button>
   </div>
   <!-- Ba objektif live la (stil Poppo) — pwogrè = kado resevwa pandan live sa a -->
@@ -1814,6 +1816,22 @@
         if (error) { reportStatus.innerHTML = '<span class="err">❌ Signalman an pa ale : ' + error.message + '</span>'; return; }
         reportDetail.value = '';
         reportStatus.innerHTML = '<span class="ok">✅ Signalman ou a voye. Ekip SheRoosLive la ap egzamine l.</span>';
+      });
+    }
+
+    // ===== PATAJE LIVE LA — bouton + meni pataje telefòn nan =====
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', async () => {
+        const liveUrl = 'https://pierreshelo1-jpg.github.io/sherooslive-privacy/shelololive-app.html';
+        const roomName = (document.getElementById('liveRoomTitle') || {}).textContent || 'SheRoosLive';
+        const shareText = '🔴 ' + roomName + ' ap live sou SheRoosLive! Vin gade:';
+        if (navigator.share) {
+          try { await navigator.share({ title: 'SheRoosLive', text: shareText, url: liveUrl }); } catch (e) { /* itilizatè a anile pataj la */ }
+        } else {
+          try { await navigator.clipboard.writeText(shareText + ' ' + liveUrl); alert('✅ Lyen live la kopye! Kole l kote ou vle pataje l.'); }
+          catch (e) { prompt('Kopye lyen live la:', liveUrl); }
+        }
       });
     }
   }
