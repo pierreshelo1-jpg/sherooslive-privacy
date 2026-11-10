@@ -828,7 +828,7 @@
       if (!p) { statusEl.innerHTML = '<span class="err">❌ Pwofil la pa kreye: ' + (window._authErr || '') + ' — verifye SQL auth_id a te kouri.</span>'; return; }
     }
     if (!p) {
-      const { data: profiles, error: pErr } = await db.from('profiles').select('*').limit(1);
+      const { data: profiles, error: pErr } = await db.from('profiles').select('*').order('id', { ascending: true }).limit(1);
       if (pErr) { statusEl.innerHTML = '<span class="err">❌ Erè koneksyon: ' + pErr.message + '</span>'; return; }
       if (profiles && profiles.length) p = profiles[0];
     }
