@@ -24,7 +24,7 @@
   #homeView { display: block; }
   #liveView { display: none; position: fixed; inset: 0; z-index: 200; background: #050510; flex-direction: column; height: 100dvh; overflow: hidden; }
   body.in-live #liveView { display: flex; }
-  .live-topbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #12081f; border-bottom: 1px solid #2a1e4d; }
+  .live-topbar { flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #12081f; border-bottom: 1px solid #2a1e4d; overflow-x: auto; scrollbar-width: none; }
   .live-topbar .room-title { flex: 1; font-weight: bold; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .live-topbar button { background: #2a1e4d; color: #fff; border: none; padding: 8px 12px; border-radius: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
   .live-topbar #leaveBtn { background: #991b1b; }
@@ -352,12 +352,13 @@
         <button id="goLiveBtn" style="background:#e0245e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%;">🔴 Kòmanse Live</button>
         <button id="audioLiveBtn" style="background:#4a3aff; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">🎙 Live ak Vwa Sèlman</button>
         <button id="watchBtn" style="background:#0e9f6e; color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">👀 Gade Live la (Espektatè)</button>
-        <p style="font-size:13px; color:#9ca3af; margin-top:10px;">👆 Klike sou yon videyo pou wè l gran, klike ankò pou retounen nan griy la.</p>
+        <p style="font-size:13px; color:#9ca3af; margin-top:10px;">👆 Sèlman animatè a ka klike sou yon videyo pou mete l gran ekran (vetikal), klike ankò pou retounen nan griy la.</p>
       </div>
     </div>
   </div>
   <div class="live-actions">
     <button id="panelBtn" style="display:none; background:#7b2ff7;">⬆️ Monte sou panel</button>
+    <button id="micToggleBtn" style="display:none;">🎙️ Mikwo</button>
     <button class="gift-btn" data-sheet="gifts">🎁 Kado</button>
     <button data-sheet="quiz">🎯 Quiz</button>
     <button data-sheet="pk">⚔️ PK</button>
@@ -369,6 +370,7 @@
   <div id="liveSheets">
     <div id="sheet-gifts" class="live-sheet">
       <div class="sheet-head"><strong>🎁 Kado</strong><button class="sheet-close">✕ Fèmen</button></div>
+      <div id="giftTargetLine" style="font-size:14px; margin:6px 0;">🎁 W ap voye kado bay: <strong id="giftTargetName">Animatè a</strong> <button id="giftTargetReset" style="display:none; background:#2a1e4d; color:#fff; border:1px solid #fff; border-radius:12px; padding:4px 10px; font-size:12px; font-weight:bold; cursor:pointer; margin-left:6px;">↩️ Bay animatè a</button></div>
       <div id="gifts"></div>
       <div id="giftStatus" style="font-size:14px; margin-top:4px;">👆 Klike yon kado pou w voye l nan live la</div>
     </div>
@@ -866,6 +868,7 @@
       const me = window._me || { id: 1, username: 'Shelo' };
       const streamId = (streams && streams.length) ? streams[0].id : 1;
       const hostId = (streams && streams.length) ? streams[0].host_id : 1;
+      window._giftHostId = hostId; // id pwofil animatè live la (pou sib kado a + premye chèz la)
       gEl.querySelectorAll('.gift').forEach((el, i) => {
         el.style.cursor = 'pointer';
         el.addEventListener('click', () => sendGift(db, gifts[i], me, streamId, hostId));
@@ -957,7 +960,10 @@
     const giftEmoji = GIFT_EMOJI;
     if (!window._sessionUser) { st.innerHTML = '<span class="err">❌ Konekte anvan ou voye kado.</span>'; return; }
     const price = g.price_coins || 0;
-    const receiverId = hostId || me.id;
+    // Sib kado a: yon moun espesifik (chwazi ak bouton 🎁 sou tile li) oswa animatè a pa defo
+    const receiverId = (window._giftTargetId || hostId || me.id);
+    // Okenn moun pa ka voye kado sou tèt li — ni animatè a, ni yon envite
+    if (Number(receiverId) === Number(me.id)) { st.innerHTML = '<span class="err">❌ Ou pa ka voye kado sou tèt ou.</span>'; return; }
     const { data: senderProf } = await db.from('profiles').select('coins').eq('id', me.id).maybeSingle();
     const bal = senderProf ? senderProf.coins : (me.coins || 0);
     if (bal < price) { st.innerHTML = '<span class="err">❌ Ou pa gen ase coins pou kado sa a (' + price + ' coins).</span>'; return; }
@@ -965,22 +971,19 @@
     const { error } = await db.from('gift_transactions').insert({ sender_id: me.id, receiver_id: receiverId, gift_id: g.id, stream_id: streamId });
     if (error) { st.innerHTML = '<span class="err">❌ Kado a pa ale : ' + error.message + '</span>'; return; }
     const share = Math.floor(price * 0.7);
-    if (receiverId === me.id) {
-      const { error: dErr } = await db.from('profiles').update({ coins: bal - price + share }).eq('id', me.id);
-      if (dErr) { st.innerHTML = '<span class="err">❌ Dediksyon an echwe : ' + dErr.message + '</span>'; return; }
-      me.coins = bal - price + share;
-    } else {
-      const { error: dErr } = await db.from('profiles').update({ coins: bal - price }).eq('id', me.id);
-      if (dErr) { st.innerHTML = '<span class="err">❌ Dediksyon an echwe : ' + dErr.message + '</span>'; return; }
-      me.coins = bal - price;
-      const { data: recvProf } = await db.from('profiles').select('coins').eq('id', receiverId).maybeSingle();
-      if (recvProf) await db.from('profiles').update({ coins: (recvProf.coins || 0) + share }).eq('id', receiverId);
-    }
+    // Dedwi pri a nan men moun k ap voye a, kredite 70% bay moun k ap resevwa a
+    const { error: dErr } = await db.from('profiles').update({ coins: bal - price }).eq('id', me.id);
+    if (dErr) { st.innerHTML = '<span class="err">❌ Dediksyon an echwe : ' + dErr.message + '</span>'; return; }
+    me.coins = bal - price;
+    const { data: recvProf } = await db.from('profiles').select('coins').eq('id', receiverId).maybeSingle();
+    if (recvProf) await db.from('profiles').update({ coins: (recvProf.coins || 0) + share }).eq('id', receiverId);
     renderProfileCard(me);
     window._giftCount = (window._giftCount || 0) + 1; updateTaskUI();
     const pkMark = (window._pk && window._pkSide) ? ' [PK:' + window._pkSide + ']' : '';
     try { const lk = levelSentKey(me.username); localStorage.setItem(lk, String(levelGetSent(me.username) + price)); } catch (e) {}
-    await db.from('messages').insert({ text: '🎁 ' + me.username + ' voye ' + (giftEmoji[g.name] || '') + ' ' + g.name + ' (' + g.price_coins + ' coins)!' + pkMark + ' [NIVO:' + levelFromSent(levelGetSent(me.username)) + ']', stream_id: streamId, sender_id: me.id });
+    const isToGuest = Number(receiverId) !== Number(hostId);
+    const recvName = isToGuest ? (window._giftTargetName || 'yon envite') : null;
+    await db.from('messages').insert({ text: '🎁 ' + me.username + ' voye ' + (giftEmoji[g.name] || '') + ' ' + g.name + ' (' + g.price_coins + ' coins)' + (isToGuest ? ' bay ' + recvName : '') + '!' + (isToGuest ? ' [KADO-POU:' + receiverId + ']' : '') + pkMark + ' [NIVO:' + levelFromSent(levelGetSent(me.username)) + ']', stream_id: streamId, sender_id: me.id });
     if (window._pk) { window._pk.myGifted = (window._pk.myGifted || 0) + price; pkUpdateBoard(); }
     if (window._pk && window._pkSide) {
       const giftedBefore = (window._pk.myGifted || 0) - price;
@@ -990,7 +993,8 @@
       // Bonis FWA yo otomatik kounye a (lansman + apre chak FWA fini) — pa gen bonis sou kado ankò.
     }
     celebrateForGift(g.name);
-    st.innerHTML = '<span class="ok">✅ Ou voye ' + g.name + ' la! (' + price + ' coins dedwi, animatè a resevwa ' + share + ' coins.) Gade nan chat la 👇</span>';
+    const recvLabel = isToGuest ? recvName : 'animatè a';
+    st.innerHTML = '<span class="ok">✅ Ou voye ' + g.name + ' la! (' + price + ' coins dedwi, ' + recvLabel + ' resevwa ' + share + ' coins.) Gade nan chat la 👇</span>';
   }
 
   // ===== KADO M RESEVWA + SALÈ PLATFÒM =====
@@ -1538,6 +1542,8 @@
     function renderMsg(m, lvl) {
       const s = pmap[m.sender_id] || { username: 'Envite', avatar_url: null };
       let displayText = m.text;
+      // Makè kado bay yon envite a pa parèt nan chat la (menm jan ak [NIVO:])
+      displayText = displayText.replace(/ \[KADO-POU:\d+\]/, '');
       if (lvl === undefined || lvl === null) {
         const lm = m.text.match(/ \[NIVO:(\d+)\]\s*$/);
         if (lm) { lvl = parseInt(lm[1], 10); displayText = m.text.slice(0, lm.index); }
@@ -1965,6 +1971,8 @@
   // Pri yon mesaj kado (fòma: "🎁 X voye 🌹 Rose (10 coins)!") — pou ba objektif la
   function goalPriceOfGiftMsg(text) {
     if (!text || text.indexOf('🎁') !== 0 || text.indexOf(' voye ') === -1) return 0;
+    // Kado bay yon envite (pa animatè a) pa ranpli ba objektif animatè a
+    if (text.indexOf('[KADO-POU:') !== -1) return 0;
     const hit = Object.keys(GIFT_EMOJI).sort((a, b) => b.length - a.length).find(n => text.includes(n));
     if (!hit) return 0;
     const pm = text.match(/\((\d[\d,]*) coins\)/);
@@ -2015,20 +2023,29 @@
       rv.appendChild(d);
     }
   }
-  new MutationObserver(() => { renderPanelSeats(); addHostControls(); }).observe(document.getElementById('remoteVideos'), { childList: true });
+  new MutationObserver(() => { renderPanelSeats(); addHostControls(); addGiftButtons(); placeHostTileFirst(); }).observe(document.getElementById('remoteVideos'), { childList: true });
 
-  // ===== GRAN EKRAN — klike sou yon videyo pou agrandi l, klike ankò pou retounen =====
+  // ===== GRAN EKRAN — SÈLMAN animatè a ka mete yon moun gran ekran (vetikal) =====
+  function clearSpotlight(tile) {
+    tile.style.gridColumn = '';
+    tile.style.aspectRatio = '16 / 9';
+    tile.style.maxWidth = '';
+    tile.style.justifySelf = '';
+    tile.removeAttribute('data-spotlight');
+  }
   document.getElementById('panelGrid').addEventListener('click', (e) => {
-    if (!panelActive) return;
+    if (!panelActive || !isPanelHost) return;
     const tile = e.target.closest('#localVideo, [id^="remote-"]');
     if (!tile) return;
     const old = document.querySelector('#panelGrid [data-spotlight="1"]');
-    if (old && old !== tile) { old.style.gridColumn = ''; old.removeAttribute('data-spotlight'); }
+    if (old && old !== tile) clearSpotlight(old);
     if (tile.getAttribute('data-spotlight') === '1') {
-      tile.style.gridColumn = '';
-      tile.removeAttribute('data-spotlight');
+      clearSpotlight(tile);
     } else {
       tile.style.gridColumn = '1 / -1';
+      tile.style.aspectRatio = '9 / 16';
+      tile.style.maxWidth = '360px';
+      tile.style.justifySelf = 'center';
       tile.setAttribute('data-spotlight', '1');
     }
   });
@@ -2127,12 +2144,15 @@
     try {
       if (!panelActive) return;
       if (agoraClient && String(agoraClient.uid) === String(uid)) return;
-      let url = null;
+      let url = null, uname = null;
       if (window._db && senderId) {
-        const { data } = await window._db.from('profiles').select('avatar_url').eq('id', senderId).maybeSingle();
-        if (data) url = data.avatar_url || null;
+        const { data } = await window._db.from('profiles').select('avatar_url, username').eq('id', senderId).maybeSingle();
+        if (data) { url = data.avatar_url || null; uname = data.username || null; }
       }
       window._panelAvatars[uid] = url;
+      if (senderId) { window._panelProfiles[uid] = senderId; window._panelNames[uid] = uname; }
+      // Si moun sa a se animatè live la, note uid Agora li pou mete tile li an premye
+      if (window._giftHostId && senderId && Number(senderId) === Number(window._giftHostId)) window._hostAgoraUid = uid;
       const box = document.getElementById('remote-' + uid);
       if (box) {
         if (!box.querySelector('video')) setTileAvatar(box, url, true);
@@ -2146,6 +2166,8 @@
           setTileAvatar(nb, url, true);
         }
       }
+      placeHostTileFirst();
+      addGiftButtons();
     } catch (e) { /* inyore */ }
   }
   async function catchUpAvatars() {
@@ -2156,15 +2178,97 @@
       (data || []).forEach(m => {
         const am = (m.text || '').match(/^\[PANEL:AVATAR:(\S+)\]/);
         if (am) applyAvatarAnnouncement(am[1], m.sender_id);
+        const hm = (m.text || '').match(/^\[PANEL:HOST:(\S+)\]/);
+        if (hm) window._hostAgoraUid = hm[1];
       });
+      placeHostTileFirst();
     } catch (e) { /* inyore */ }
   }
 
+  // ===== KADO BAY YON MOUN ESPESIFIK + ANIMATÈ AN PREMYE CHÈZ =====
+  // Kat uid Agora -> pwofil (ranpli pa anons avatar yo): _panelProfiles[uid] = id pwofil, _panelNames[uid] = non
+  window._panelProfiles = window._panelProfiles || {};
+  window._panelNames = window._panelNames || {};
+  window._giftTargetId = window._giftTargetId || null; // id pwofil moun k ap resevwa kado a (null = animatè a)
+  window._giftTargetName = window._giftTargetName || null;
+  window._hostAgoraUid = window._hostAgoraUid || null; // uid Agora animatè live la
+
+  function updateGiftTargetLine() {
+    const nameEl = document.getElementById('giftTargetName');
+    const resetBtn = document.getElementById('giftTargetReset');
+    if (!nameEl) return;
+    if (window._giftTargetId) {
+      nameEl.textContent = window._giftTargetName || 'Moun sa a';
+      if (resetBtn) resetBtn.style.display = 'inline-block';
+    } else {
+      nameEl.textContent = 'Animatè a';
+      if (resetBtn) resetBtn.style.display = 'none';
+    }
+  }
+
+  // Louvri yon fèy san li pa fèmen si li te deja louvri (openSheet chanje l)
+  function openSheetOnly(name) {
+    const sheets = document.getElementById('liveSheets');
+    const target = document.getElementById('sheet-' + name);
+    if (!sheets || !target) return;
+    sheets.querySelectorAll('.live-sheet').forEach(s => { s.style.display = 'none'; });
+    target.style.display = 'block';
+    sheets.style.display = 'block';
+  }
+
+  // Chwazi moun yon tile a kòm moun k ap resevwa kado a, epi louvri fèy kado a
+  function selectGiftTarget(uid) {
+    const pid = window._panelProfiles ? window._panelProfiles[uid] : null;
+    const st = document.getElementById('giftStatus');
+    if (!pid) {
+      if (st) st.innerHTML = '<span class="err">❌ Moun sa a poko idantifye — tann yon ti moman epi eseye ankò.</span>';
+      openSheetOnly('gifts');
+      return;
+    }
+    // Peze 🎁 sou tile animatè a retounen sib la bay animatè a
+    if (window._giftHostId && Number(pid) === Number(window._giftHostId)) {
+      window._giftTargetId = null; window._giftTargetName = null;
+    } else {
+      window._giftTargetId = Number(pid);
+      window._giftTargetName = (window._panelNames && window._panelNames[uid]) || 'Moun sa a';
+    }
+    updateGiftTargetLine();
+    openSheetOnly('gifts');
+  }
+
+  // Mete tile animatè live la an premye nan griy panel la (sou ekran tout moun)
+  function placeHostTileFirst() {
+    const rv = document.getElementById('remoteVideos');
+    if (!rv || !window._hostAgoraUid) return;
+    const hostBox = document.getElementById('remote-' + window._hostAgoraUid);
+    if (!hostBox) return;
+    rv.querySelectorAll('[id^="remote-"]').forEach(b => { if (b !== hostBox) b.style.order = ''; });
+    hostBox.style.order = '-1';
+  }
+
+  // Bouton 🎁 sou chak videyo envite (pou tout moun) — peze l pou voye kado bay moun sa a
+  function addGiftButtons() {
+    if (!panelActive) return;
+    document.querySelectorAll('#remoteVideos [id^="remote-"]').forEach(box => {
+      if (box.querySelector('.tile-gift-btn')) return;
+      const uid = box.id.replace('remote-', '');
+      const b = document.createElement('button');
+      b.className = 'tile-gift-btn';
+      b.textContent = '🎁';
+      b.title = 'Voye kado bay moun sa a';
+      b.style.cssText = 'position:absolute; top:6px; right:6px; background:rgba(224,36,94,0.9); color:#fff; border:1px solid #fff; border-radius:20px; width:34px; height:34px; font-size:16px; cursor:pointer; z-index:6;';
+      b.addEventListener('click', (ev) => { ev.stopPropagation(); selectGiftTarget(uid); });
+      box.style.position = 'relative';
+      box.appendChild(b);
+    });
+  }
+
   async function handlePanelControl(text, senderId) {
-    const m = text.match(/^\[PANEL:(MUTE|UNMUTE|REMOVE|VIDOFF|VIDON|AVATAR):(\S+)\]/);
+    const m = text.match(/^\[PANEL:(MUTE|UNMUTE|REMOVE|VIDOFF|VIDON|AVATAR|HOST):(\S+)\]/);
     if (!m || !agoraClient) return;
     const action = m[1], uid = m[2];
     if (action === 'AVATAR') { await applyAvatarAnnouncement(uid, senderId); return; }
+    if (action === 'HOST') { window._hostAgoraUid = uid; placeHostTileFirst(); return; }
     if (action === 'VIDOFF') {
       const box = document.getElementById('remote-' + uid);
       if (box) setTileAvatar(box, window._panelAvatars[uid] || null, true);
@@ -2175,9 +2279,11 @@
     if (String(agoraClient.uid) !== uid) return;
     if (action === 'MUTE') {
       if (localAudioTrack) await localAudioTrack.setEnabled(false);
+      hostMuted = true; micMuted = true; updateMicBtn();
       liveStatus.innerHTML = '<span>🔇 Animatè a mute w. Ou pa ka pale pou kounye a.</span>';
     } else if (action === 'UNMUTE') {
       if (localAudioTrack) await localAudioTrack.setEnabled(true);
+      hostMuted = false; micMuted = false; updateMicBtn();
       liveStatus.innerHTML = '<span>🔊 Animatè a retire mute la. Ou ka pale ankò.</span>';
     } else if (action === 'VIDOFF') {
       if (localVideoTrack) await localVideoTrack.setEnabled(false);
@@ -2192,7 +2298,7 @@
         if (localAudioTrack) { localAudioTrack.close(); localAudioTrack = null; }
         if (localVideoTrack) { localVideoTrack.close(); localVideoTrack = null; }
         await agoraClient.leave();
-        panelPublishing = false;
+        panelPublishing = false; hideMicBtn();
         document.getElementById('localVideo').innerHTML = '';
         document.getElementById('localVideo').style.display = 'none';
         panelBtn.style.display = 'block';
@@ -2269,8 +2375,13 @@
       watchBtn.style.display = 'none';
       panelBtn.style.display = 'none';
       leaveBtn.style.display = 'block';
+      showMicBtn();
       renderPanelSeats();
       await announceAvatar();
+      // Anonse uid Agora animatè a pou tout ekran yo mete tile li an premye chèz
+      if (window._db && window._me && agoraClient && agoraClient.uid !== undefined && agoraClient.uid !== null) {
+        try { await window._db.from('messages').insert({ text: '[PANEL:HOST:' + agoraClient.uid + ']', stream_id: currentStreamRowId || window._streamId || 1, sender_id: window._me.id }); } catch (e) {}
+      }
       if (audioOnly) setTileAvatar(document.getElementById('localVideo'), myAvatarUrl(), true);
     } catch (e) {
       liveStatus.innerHTML = '<span class="err">❌ Erè Agora: ' + e.message + '</span>';
@@ -2347,6 +2458,7 @@
       panelPublishing = true;
       document.getElementById('localVideo').style.display = 'block';
       panelBtn.style.display = 'none';
+      showMicBtn();
       renderPanelSeats();
       liveStatus.innerHTML = '<span class="ok">🎛 OU SOU PANEL LA! Videyo w ap pase kounye a.</span>';
       document.getElementById('liveSetup').style.display = 'none';
@@ -2559,12 +2671,16 @@
   async function leaveLive() {
     try {
       panelActive = false; panelPublishing = false; isPanelHost = false; window._goalHost = false; updateGoalBar();
+      window._giftTargetId = null; window._giftTargetName = null; updateGiftTargetLine();
       if (localAudioTrack) { localAudioTrack.close(); localAudioTrack = null; }
       if (localVideoTrack) { localVideoTrack.close(); localVideoTrack = null; }
       if (agoraClient) { await agoraClient.leave(); agoraClient = null; }
       document.getElementById('localVideo').innerHTML = '';
       document.getElementById('localVideo').style.display = 'block';
       document.getElementById('localVideo').style.gridColumn = '';
+      document.getElementById('localVideo').style.aspectRatio = '16 / 9';
+      document.getElementById('localVideo').style.maxWidth = '';
+      document.getElementById('localVideo').style.justifySelf = '';
       document.getElementById('localVideo').removeAttribute('data-spotlight');
       document.getElementById('remoteVideos').innerHTML = '';
       if (window._db && currentStreamRowId) {
@@ -2578,6 +2694,7 @@
       watchBtn.style.display = 'block';
       panelBtn.style.display = 'none';
       leaveBtn.style.display = 'none';
+      hideMicBtn();
       document.getElementById('liveSetup').style.display = 'flex';
       closeSheets();
     } catch (e) {
@@ -2589,6 +2706,32 @@
     showHomeView();
   }
   leaveBtn.addEventListener('click', exitLiveRoom);
+  // ===== MIKWO PA OU — fèmen/louvri pwòp mikwo ou pandan live la =====
+  let micMuted = false, hostMuted = false;
+  function updateMicBtn() {
+    const b = document.getElementById('micToggleBtn');
+    if (!b) return;
+    b.textContent = hostMuted ? '🔇 Mute pa animatè a' : (micMuted ? '🔇 Mikwo etenn' : '🎙️ Mikwo');
+  }
+  function showMicBtn() {
+    micMuted = false; hostMuted = false; updateMicBtn();
+    const b = document.getElementById('micToggleBtn');
+    if (b) b.style.display = 'block';
+  }
+  function hideMicBtn() {
+    micMuted = false; hostMuted = false;
+    const b = document.getElementById('micToggleBtn');
+    if (b) { b.style.display = 'none'; b.textContent = '🎙️ Mikwo'; }
+  }
+  async function toggleMic() {
+    if (!localAudioTrack) return;
+    if (hostMuted) { liveStatus.innerHTML = '<span>🔇 Animatè a mute w — ou pa ka louvri mikwo a pou kounye a.</span>'; return; }
+    micMuted = !micMuted;
+    await localAudioTrack.setEnabled(!micMuted);
+    updateMicBtn();
+    liveStatus.innerHTML = micMuted ? '<span>🔇 Mikwo ou etenn. Peson pa tande w.</span>' : '<span>🎙️ Mikwo ou louvri. Yo tande w kounye a.</span>';
+  }
+  document.getElementById('micToggleBtn').addEventListener('click', toggleMic);
   document.getElementById('liveBackBtn').addEventListener('click', exitLiveRoom);
   document.getElementById('enterLiveBtn').addEventListener('click', () => enterLiveRoom('SheRoosLive'));
   // Ba navigasyon anba a (Poppo): Akèy ↔ Pwofil, + = Kòmanse Live
@@ -2602,6 +2745,9 @@
   document.querySelectorAll('.live-actions [data-sheet]').forEach(b => {
     b.addEventListener('click', () => openSheet(b.getAttribute('data-sheet')));
   });
+  // Bouton "Bay animatè a" nan fèy kado a: retounen sib kado a bay animatè a
+  const giftTargetReset = document.getElementById('giftTargetReset');
+  if (giftTargetReset) giftTargetReset.addEventListener('click', () => { window._giftTargetId = null; window._giftTargetName = null; updateGiftTargetLine(); });
   document.querySelectorAll('.sheet-close').forEach(b => {
     b.addEventListener('click', closeSheets);
   });
